@@ -485,15 +485,13 @@ object Diff {
         if (_lastInsBaseIx >= 0) inserts += Op.Insert(_lastInsBaseIx, _lastInsTargetIx, _lastInsCount)
       }
 
-      /**
-        * relatively direct transcription of https://blog.robertelder.org/diff-algorithm/,
-        * with a few optimizations, like stack-safe (i.e. heap-based) recursion and immediate
-        * collapsing of contiguous sequences of deletes or inserts, respectively
-        *
-        * complexity:
-        * - time: O(min(len(a),len(b)) * D)
-        * - space: 2 * (2 * min(len(a),len(b))) space
-        */
+      // relatively direct transcription of https://blog.robertelder.org/diff-algorithm/,
+      // with a few optimizations, like stack-safe (i.e. heap-based) recursion and immediate
+      // collapsing of contiguous sequences of deletes or inserts, respectively
+      //
+      // complexity:
+      // - time: O(min(len(a),len(b)) * D)
+      // - space: 2 * (2 * min(len(a),len(b))) space
       def rec(): Unit = {
         val M     = stack.pop()
         val j     = stack.pop()
@@ -752,13 +750,11 @@ object Diff {
             next
         }
 
-      /**
-        * @param delIx index into `deletes`
-        * @param insIx index into `inserts`
-        * @param cb cursor into base sequence
-        * @param ct cursor into target sequence
-        * @param last last chunk, not yet appended to `buf`
-        */
+      // @param delIx index into `deletes`
+      // @param insIx index into `inserts`
+      // @param cb cursor into base sequence
+      // @param ct cursor into target sequence
+      // @param last last chunk, not yet appended to `buf`
       @tailrec def rec(delIx: Int, insIx: Int, cb: Int, ct: Int, last: Chunk[T]): ArraySeq[Chunk[T]] = {
         def lastAfterUnchanged(baseIx: Int) =
           if (cb < baseIx) append(last, Unchanged(new Slice(base, cb, baseIx), new Slice(target, ct, ct + baseIx - cb)))
