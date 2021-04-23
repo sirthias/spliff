@@ -70,21 +70,15 @@ class OpsTest extends SpliffSuite {
     )
   }
 
-  test("move from prefix") {
-    diff("abcde", "cdabe")(
-      Move(0, 2, 2)
-    )
-  }
-
   test("move prefix") {
     diff("abcde", "cdabe")(
-      Move(0, 2, 2)
+      Move(0, 4, 2)
     )
   }
 
   test("move middle") {
     diff("abcdefgh", "abefgcdh")(
-      Move(2, 5, 2)
+      Move(2, 7, 2)
     )
   }
 

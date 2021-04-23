@@ -153,12 +153,25 @@ object Diff {
       * Represents a number of contiguous elements that is present in both the base and target sequences
       * but in a different position in the sequence relative to its surrounding elements.
       *
-      * @param baseIx the index of the first element in the base sequence
-      * @param targetIx the index of the first element in the target sequence
+      * @param origIx the index into the base sequence where the elements are moved from (i.e. deleted)
+      * @param destIx the index into the base sequence where the elements are moved to (i.e. inserted)
       * @param count the number of elements in the moved chunk
       */
-    final case class Move(baseIx: Int, targetIx: Int, count: Int) extends DelInsMov {
+    final case class Move(origIx: Int, destIx: Int, count: Int) extends DelInsMov {
       if (count <= 0) throw new IllegalArgumentException
+
+      /**
+        * True if this operation moves elements from higher indices to lower indices
+        */
+      def isForwardMove: Boolean = destIx < origIx
+
+      /**
+        * True if this operation moves elements from lower indices to higher indices
+        */
+      def isBackwardMove: Boolean = origIx < destIx
+
+      // we always sort 'Move' ops according to the first base index they affect
+      def baseIx = math.min(origIx, destIx)
     }
 
     /**
@@ -617,7 +630,7 @@ object Diff {
             if (del.count == ins.count && !pairedInserts.contains(insIx) && doMatch(0)) {
               // this del and ins match completely, so merge them into an `Op.Move`
               pairedInserts += insIx // remember that this insert is "taken"
-              rec(delIx + 1, 0, append(Op.Move(del.baseIx, ins.targetIx, del.count), resIx))
+              rec(delIx + 1, 0, append(Op.Move(del.baseIx, ins.baseIx, del.count), resIx))
             } else if (insIx + 1 == inserts.length) {
               // we have not found a matching insert for the current delete, so append it and continue with the next one
               rec(delIx + 1, 0, append(del, resIx))
