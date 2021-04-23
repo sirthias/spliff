@@ -83,8 +83,8 @@ val lcs: Seq[T] = Diff.longestCommonSubsequence(base, target)
 val distance: Int = Diff.minEditDistance(base, target)
 ```
 
-For further information and more detailed API documentation just look at the source code,
-which is hopefully not hard to read. (Even though the algorithmic part itself is quite dense.)
+For further information and more detailed API documentation just look at the [source code], which is hopefully not
+that hard to read. (Even though the algorithmic core parts themselves are certainly quite dense.)
 
 
 License
@@ -118,6 +118,7 @@ For more background info on the license please also see the [official MPL 2.0 FA
   [SBT]: https://www.scala-sbt.org/
   [scalafmt]: https://scalameta.org/scalafmt/
   [Scala.js]: https://www.scala-js.org/
+  [source code]: https://github.com/sirthias/spliff/blob/master/src/main/scala/io/bullet/spliff/Diff.scala
   [1]: http://www.xmailserver.org/diff2.pdf
   [2]: https://www.mozilla.org/en-US/MPL/2.0/
   [3]: http://en.wikipedia.org/wiki/Copyleft
