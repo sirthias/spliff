@@ -7,7 +7,7 @@ supporting logic presented by _Eugene W. Myers_ in [his 1986 paper "An O(ND) Dif
 Myers' algorithm is the default diffing logic for many popular tools (like `git diff`) because it performs well
 (time- and memory-wise) and tends to produce diffing results that humans would consider "good".
 
-Many improvements and refinements have been proposed over Myers' original algorithm since 1986.
+Many improvements and refinements have been proposed over Myers' original algorithm since 1986.\  
 The implementations provided by _spliff_ are based on the [work by Robert Elder][5].
 
 _spliff_ sports these features:
