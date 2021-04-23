@@ -7,7 +7,7 @@ supporting logic presented by _Eugene W. Myers_ in [his 1986 paper "An O(ND) Dif
 Myers' algorithm is the default diffing logic for many popular tools (like `git diff`) because it performs well
 (time- and memory-wise) and tends to produce diffing results that humans would consider "good".
 
-Many improvements and refinements have been proposed over Myers' original algorithm since 1986.\  
+Many improvements and refinements have been proposed over Myers' original algorithm since 1986.    
 The implementations provided by _spliff_ are based on the [work by Robert Elder][5].
 
 _spliff_ sports these features:
@@ -59,7 +59,7 @@ val delInsSorted: Seq[Diff.Op.DelIns] = diff.delInsOpsSorted // same but sorted 
 val delInsMov: Seq[Diff.Op.DelInsMov] = diff.delInsMovOps
 val delInsMovSorted: Seq[Diff.Op.DelInsMov] = diff.delInsMovOpsSorted // same but sorted by index
 
-// the diff result as a list of 'delete', 'insert', 'move' and replace operations
+// the diff result as a list of 'delete', 'insert', 'move' and 'replace' operations
 val allOps: Seq[Diff.Op] = diff.allOps // already sorted by index
 
 // a bidirectional mapping between each individual base and target index, where possible
@@ -78,7 +78,7 @@ import io.bullet.spliff.Diff
 // determines the longest subsequence of elements that is present in both sequences
 val lcs: Seq[T] = Diff.longestCommonSubsequence(base, target)
 
-// determines the minimum number of edits required to transform `base` and `target`,
+// determines the minimum number of edits required to transform `base` into `target`,
 // whereby one "edit" corresponds to deleting or inserting one single element
 val distance: Int = Diff.minEditDistance(base, target)
 ```
