@@ -24,6 +24,7 @@ lazy val commonSettings = Seq(
 
   libraryDependencies += "org.scalameta" %% "munit" % "0.7.25" % Test,
 
+  Compile / doc / scalacOptions += "-no-link-warnings",
   scalacOptions ++= Seq(
     "-deprecation",
     "-encoding", "UTF-8",
