@@ -293,27 +293,32 @@ object Diff {
       * @param baseElements   the slice of the base sequence
       * @param targetElements the slice of the target sequence
       */
-    final case class Unchanged[T](baseElements: Slice[T], targetElements: Slice[T]) extends Chunk[T] {
+    final case class InBoth[T](baseElements: Slice[T], targetElements: Slice[T]) extends Chunk[T] {
       if (baseElements.isEmpty) throw new IllegalArgumentException
       if (baseElements.length != targetElements.length) throw new IllegalStateException
+
+      /**
+        * Source-agnostic access to the unchanged slice of data elements.
+        */
+      def elements: IndexedSeqView[T] = baseElements
     }
 
     /**
       * A chunk, which only appears in the base sequence.
       *
-      * @param baseElements the slice of the base sequence
+      * @param elements the slice of the base sequence
       */
-    final case class Deleted[T](baseElements: Slice[T]) extends Chunk[T] {
-      if (baseElements.isEmpty) throw new IllegalArgumentException
+    final case class InBase[T](elements: Slice[T]) extends Chunk[T] {
+      if (elements.isEmpty) throw new IllegalArgumentException
     }
 
     /**
       * A chunk, which only appears in the target sequence.
       *
-      * @param targetElements the slice of the target sequence
+      * @param elements the slice of the target sequence
       */
-    final case class Inserted[T](targetElements: Slice[T]) extends Chunk[T] {
-      if (targetElements.isEmpty) throw new IllegalArgumentException
+    final case class InTarget[T](elements: Slice[T]) extends Chunk[T] {
+      if (elements.isEmpty) throw new IllegalArgumentException
     }
 
     /**
@@ -324,7 +329,7 @@ object Diff {
       * @param baseElements   the slice of the base sequence
       * @param targetElements the slice of the target sequence
       */
-    final case class Replaced[T](baseElements: Slice[T], targetElements: Slice[T]) extends Chunk[T] {
+    final case class Distinct[T](baseElements: Slice[T], targetElements: Slice[T]) extends Chunk[T] {
       if (baseElements.isEmpty) throw new IllegalArgumentException
       if (targetElements.isEmpty) throw new IllegalArgumentException
     }
@@ -500,15 +505,15 @@ object Diff {
       j: Int,
       M: Int,
       stack: IntArrayStack)(implicit eq: Eq[T]): Int = {
-    val MAX2     = N + M + 2
-    val Delta    = N - M
-    val deltaOdd = (Delta & 1) != 0
-    val Vf       = new Array[Int](MAX2)
-    val Vb       = new Array[Int](MAX2)
+    val MAX2                = N + M + 2
+    val Delta               = N - M
+    val deltaOdd            = (Delta & 1) != 0
+    val Vf                  = new Array[Int](MAX2)
+    val Vb                  = new Array[Int](MAX2)
     @inline def vf(ix: Int) = Vf(if (ix >= 0) ix else MAX2 + ix)
     @inline def vb(ix: Int) = Vb(if (ix >= 0) ix else MAX2 + ix)
-    var D      = 0
-    val Dlimit = (MAX2 >> 1) + (MAX2 & 1)
+    var D                   = 0
+    val Dlimit              = (MAX2 >> 1) + (MAX2 & 1)
     while (D < Dlimit) {
 
       var k = -D
@@ -832,10 +837,10 @@ object Diff {
       def append(last: Chunk[T], next: Chunk[T]): Chunk[T] =
         (last, next) match {
           case (null, _)                     => next
-          case (Deleted(a), Inserted(b))     => Replaced(a, b)
-          case (Inserted(b), Deleted(a))     => Replaced(a, b)
-          case (Replaced(a, b), Deleted(c))  => Replaced(a merge c, b)
-          case (Replaced(a, b), Inserted(c)) => Replaced(a, b merge c)
+          case (InBase(a), InTarget(b))      => Distinct(a, b)
+          case (InTarget(b), InBase(a))      => Distinct(a, b)
+          case (Distinct(a, b), InBase(c))   => Distinct(a merge c, b)
+          case (Distinct(a, b), InTarget(c)) => Distinct(a, b merge c)
           case _ =>
             buf += last
             next
@@ -848,18 +853,18 @@ object Diff {
       // @param last last chunk, not yet appended to `buf`
       @tailrec def rec(delIx: Int, insIx: Int, cb: Int, ct: Int, last: Chunk[T]): ArraySeq[Chunk[T]] = {
         def lastAfterUnchanged(baseIx: Int) =
-          if (cb < baseIx) append(last, Unchanged(new Slice(base, cb, baseIx), new Slice(target, ct, ct + baseIx - cb)))
+          if (cb < baseIx) append(last, InBoth(new Slice(base, cb, baseIx), new Slice(target, ct, ct + baseIx - cb)))
           else last
 
         val del = if (delIx < deletes.length) deletes(delIx) else null
         val ins = if (insIx < inserts.length) inserts(insIx) else null
 
         if ((del ne null) && ((ins eq null) || del.baseIx <= ins.baseIx)) {
-          val deleted = Deleted(new Slice(base, del.baseIx, del.baseIx + del.count))
+          val deleted = InBase(new Slice(base, del.baseIx, del.baseIx + del.count))
           val newLast = append(lastAfterUnchanged(del.baseIx), deleted)
           rec(delIx + 1, insIx, del.baseIx + del.count, if (del.baseIx > cb) ct + del.baseIx - cb else ct, newLast)
         } else if (ins ne null) {
-          val inserted = Inserted(new Slice(target, ins.targetIx, ins.targetIx + ins.count))
+          val inserted = InTarget(new Slice(target, ins.targetIx, ins.targetIx + ins.count))
           val newLast  = append(lastAfterUnchanged(ins.baseIx), inserted)
           rec(delIx, insIx + 1, math.max(cb, ins.baseIx), ins.targetIx + ins.count, newLast)
         } else buf.addOne(lastAfterUnchanged(base.size)).result()

@@ -264,10 +264,10 @@ class ChunkTest extends SpliffSuite {
   private def diff(base: String, target: String)(expected: ChunkFun*)(implicit l: munit.Location): Unit = {
     import Diff.Chunk._
     Diff(base, target).chunks.map {
-      case Unchanged(a, b) => (Unchanged, ((a.from, a.until, a.mkString), (b.from, b.until, b.mkString)))
-      case Inserted(x)     => (Inserted, (x.from, x.until, x.mkString))
-      case Deleted(x)      => (Deleted, (x.from, x.until, x.mkString))
-      case Replaced(a, b)  => (Replaced, ((a.from, a.until, a.mkString), (b.from, b.until, b.mkString)))
+      case InBoth(a, b)   => (InBoth, ((a.from, a.until, a.mkString), (b.from, b.until, b.mkString)))
+      case InBase(x)      => (InBase, (x.from, x.until, x.mkString))
+      case InTarget(x)    => (InTarget, (x.from, x.until, x.mkString))
+      case Distinct(a, b) => (Distinct, ((a.from, a.until, a.mkString), (b.from, b.until, b.mkString)))
     } ==> expected.foldLeft((0, 0, Seq.empty[Product]))((tuple, f: ChunkFun) => f(tuple))._3
   }
 
@@ -275,25 +275,25 @@ class ChunkTest extends SpliffSuite {
     case (i, j, chunks) =>
       val i2 = i + value.length
       val j2 = j + value.length
-      (i2, j2, chunks :+ ((Diff.Chunk.Unchanged, ((i, i2, value), (j, j2, value)))))
+      (i2, j2, chunks :+ ((Diff.Chunk.InBoth, ((i, i2, value), (j, j2, value)))))
   }
 
   private def inFirst(value: String): ChunkFun = {
     case (i, j, chunks) =>
       val i2 = i + value.length
-      (i2, j, chunks :+ ((Diff.Chunk.Deleted, (i, i2, value))))
+      (i2, j, chunks :+ ((Diff.Chunk.InBase, (i, i2, value))))
   }
 
   private def inSecond(value: String): ChunkFun = {
     case (i, j, chunks) =>
       val j2 = j + value.length
-      (i, j2, chunks :+ ((Diff.Chunk.Inserted, (j, j2, value))))
+      (i, j2, chunks :+ ((Diff.Chunk.InTarget, (j, j2, value))))
   }
 
   private def unique(a: String, b: String): ChunkFun = {
     case (i, j, chunks) =>
       val i2 = i + a.length
       val j2 = j + b.length
-      (i2, j2, chunks :+ ((Diff.Chunk.Replaced, ((i, i2, a), (j, j2, b)))))
+      (i2, j2, chunks :+ ((Diff.Chunk.Distinct, ((i, i2, a), (j, j2, b)))))
   }
 }

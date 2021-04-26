@@ -18,7 +18,7 @@ class LongestCommongSubsequenceTest extends RandomizedTest {
       val lcs    = Diff.longestCommonSubsequence(base, target).mkString
       val chunks = Diff(base, target).chunks
 
-      lcs ==> chunks.collect({ case Diff.Chunk.Unchanged(a, _) => a }).flatten.mkString
+      lcs ==> chunks.collect({ case Diff.Chunk.InBoth(a, _) => a }).flatten.mkString
     }
   }
 
