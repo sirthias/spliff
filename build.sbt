@@ -57,8 +57,11 @@ lazy val commonSettings = Seq(
     }
   },
 
-  sourcesInBase := false,
+  Compile / console / scalacOptions ~= (_ filterNot(o => o.contains("warn") || o.contains("Xlint"))),
+  Test / console / scalacOptions := (Compile / console / scalacOptions).value,
+  Compile / doc / scalacOptions += "-no-link-warnings",
   Compile / unmanagedResources += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
+  sourcesInBase := false,
 
   // file headers
   headerLicense := Some(HeaderLicense.MPLv2("2021", "Mathias Doenitz")),
