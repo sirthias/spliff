@@ -14,7 +14,8 @@ inThisBuild(
         "sirthias" -> "Mathias Doenitz",
       ).map { case (username, fullName) =>
         Developer(username, fullName, s"@$username", url(s"https://github.com/$username"))
-      }
+      },
+    versionScheme := Some("early-semver")
   )
 )
 
