@@ -70,7 +70,7 @@ class ChunkTest extends SpliffSuite {
     )
   }
 
-  test("extra char in base") {
+  test("extra char in target") {
     diff("ab", "axb")(
       inBoth("a"),
       inSecond("x"),
@@ -144,7 +144,7 @@ class ChunkTest extends SpliffSuite {
     )
   }
 
-  test("extra suffix in base") {
+  test("extra prefix and suffix in base") {
     diff("xabcy", "abc")(
       inFirst("x"),
       inBoth("abc"),
@@ -263,17 +263,12 @@ class ChunkTest extends SpliffSuite {
 
   private def diff(base: String, target: String)(expected: ChunkFun*)(implicit l: munit.Location): Unit = {
     import Diff.Chunk._
-    val chunks = Diff(base, target).chunks
-
-    chunks.map {
+    Diff(base, target).chunks.map {
       case Unchanged(a, b) => (Unchanged, ((a.from, a.until, a.mkString), (b.from, b.until, b.mkString)))
       case Inserted(x)     => (Inserted, (x.from, x.until, x.mkString))
       case Deleted(x)      => (Deleted, (x.from, x.until, x.mkString))
       case Replaced(a, b)  => (Replaced, ((a.from, a.until, a.mkString), (b.from, b.until, b.mkString)))
     } ==> expected.foldLeft((0, 0, Seq.empty[Product]))((tuple, f: ChunkFun) => f(tuple))._3
-
-    Diff.longestCommonSubsequence(base, target).mkString ==>
-    chunks.collect({ case Unchanged(a, _) => a }).flatten.mkString
   }
 
   private def inBoth(value: String): ChunkFun = {

@@ -14,6 +14,7 @@ import scala.collection.immutable.ArraySeq
 import scala.collection.mutable
 import scala.collection.IndexedSeqView
 import scala.reflect.ClassTag
+import scala.util.Try
 
 /**
   * The result of running Myers' diff algorithm against two [[IndexedSeq]] instances.
@@ -81,6 +82,18 @@ sealed abstract class Diff[T] {
   def allOps: ArraySeq[Diff.Op]
 
   /**
+    * Identifies move operations and packages the diff data into a [[Diff.Patch]] instances,
+    * which contains all information required to produce the `target` sequence when only the `base` sequence is given.
+    */
+  def patch(implicit ct: ClassTag[T]): Diff.Patch[T]
+
+  /**
+    * Segments the inputs into a sequence of chunks representing the diff in a alternative form,
+    * that is sometimes better suited to the task at hand than [[allOps]] and friends.
+    */
+  def chunks: ArraySeq[Diff.Chunk[T]]
+
+  /**
     * Creates a bidirectional index mapping between [[base]] and [[target]], without taking moves into account.
     * This means that elements that have been moved will not have their indices mapped.
     * They simply appear as "not present" in the other sequence.
@@ -93,18 +106,17 @@ sealed abstract class Diff[T] {
     * Creates a bidirectional index mapping between [[base]] and [[target]], taking moves into account.
     */
   def bimap: Diff.Bimap
-
-  /**
-    * Segments the inputs into a sequence of chunks representing the diff in a alternative form,
-    * that is sometimes better suited to the task at hand than [[allOps]] and friends.
-    */
-  def chunks: ArraySeq[Diff.Chunk[T]]
 }
 
 object Diff {
 
   /**
     * An ADT for all "operations" the diff algorithm can derive.
+    * Operations don't contain any elements themselves, they only hold indices into the `base` and `target` sequences
+    * for maximum efficiency.
+    *
+    * If you need something that holds all data required to transform `base` into `target`, including the actual
+    * elements, check out [[Patch]].
     */
   sealed trait Op {
 
@@ -132,18 +144,18 @@ object Diff {
       * Represents a number of contiguous elements that is present in the base sequence but not in the target.
       *
       * @param baseIx the index of the first element in the base sequence that is deleted
-      * @param count the number of elements in the deleted chunk
+      * @param count  the number of elements in the deleted chunk
       */
-    final case class Delete(baseIx: Int, count: Int) extends DelIns {
+    final case class Delete(baseIx: Int, count: Int) extends DelIns with Patch.Step[Nothing] {
       if (count <= 0) throw new IllegalArgumentException
     }
 
     /**
       * Represents a number of contiguous elements that is present in the target sequence but not in the base.
       *
-      * @param baseIx the index of the element in the base sequence where the new elements are inserted
+      * @param baseIx   the index of the element in the base sequence where the new elements are inserted
       * @param targetIx the index of the first element in the target sequence that is inserted
-      * @param count the number of elements in the inserted chunk
+      * @param count    the number of elements in the inserted chunk
       */
     final case class Insert(baseIx: Int, targetIx: Int, count: Int) extends DelIns {
       if (count <= 0) throw new IllegalArgumentException
@@ -155,10 +167,11 @@ object Diff {
       *
       * @param origIx the index into the base sequence where the elements are moved from (i.e. deleted)
       * @param destIx the index into the base sequence where the elements are moved to (i.e. inserted)
-      * @param count the number of elements in the moved chunk
+      * @param count  the number of elements in the moved chunk
       */
-    final case class Move(origIx: Int, destIx: Int, count: Int) extends DelInsMov {
+    final case class Move(origIx: Int, destIx: Int, count: Int) extends DelInsMov with Patch.Step[Nothing] {
       if (count <= 0) throw new IllegalArgumentException
+      if (origIx == destIx) throw new IllegalArgumentException
 
       /**
         * True if this operation moves elements from higher indices to lower indices
@@ -170,8 +183,8 @@ object Diff {
         */
       def isBackwardMove: Boolean = origIx < destIx
 
-      // we always sort 'Move' ops according to the first base index they affect
-      def baseIx = math.min(origIx, destIx)
+      // we always sort 'Move' ops according to the _insertion_ point, not the deletion point
+      def baseIx = destIx
     }
 
     /**
@@ -180,7 +193,7 @@ object Diff {
       *
       * This operation is essentially a combination of a [[Delete]] and an [[Insert]] at the same `baseIx`.
       *
-      * @param baseIx the index of the first element in the base sequence that are replaced
+      * @param baseIx   the index of the first element in the base sequence that are replaced
       * @param delCount the number of elements in the base sequence that are replaced
       * @param targetIx the index of the first element in the target sequence that are inserted
       * @param insCount the number of elements that are inserted from the target sequence
@@ -195,29 +208,78 @@ object Diff {
   }
 
   /**
-    * Allow for mapping indices bidirectionally between the base and target sequences.
+    * A [[Patch]] encapsulates all information required to transform the `base` sequence into the `target` sequence.
+    *
+    * In addition to the data of which elements need to be deleted and/or moved it also contains the actual elements
+    * that are to be inserted.
     */
-  sealed trait Bimap {
+  final case class Patch[T](baseSize: Int, targetSize: Int, steps: ArraySeq[Patch.Step[T]]) {
 
     /**
-      * Maps base indices to target indices.
+      * Returns an equivalent patch that has all its steps sorted by `baseIx`.
       *
-      * Returns [[None]] if the given index is outside the index range of the base sequence
-      * or the element at the respective place was deleted and therefore doesn't appear in the target.
+      * NOTE: The steps will be sorted anyway during application of the patch against a `base` sequence,
+      * so the steps can be held in any order in the [[Patch]] sequence.
+      * Pre-sorting of the steps as it is done here is therefore not required, but may be beneficial for presentation or
+      * other "normalization" processes.
       */
-    def baseToTargetIndex(ix: Int): Option[Int]
+    def sorted: Patch[T] = copy(steps = steps.sorted)
 
     /**
-      * Maps target indices to base indices.
-      *
-      * Returns [[None]] if the given index is outside the index range of the target sequence
-      * or the element at the respective place was insert and therefore doesn't appear in the base.
+      * Applies this patch to the given `base` sequence, producing either the original `target` sequence or an error.
       */
-    def targetToBaseIndex(ix: Int): Option[Int]
+    def apply(base: IndexedSeq[T])(implicit ct: ClassTag[T]): Either[Patch.Failure, ArraySeq[T]] =
+      try {
+        Right(throwingApply(base))
+      } catch {
+        case e: Patch.Failure => Left(e)
+      }
+
+    /**
+      * Applies this patch to the given `base` sequence, producing a [[Try]] instance holding either the original
+      * `target` sequence or a [[Patch.Failure]].
+      */
+    def tryApply(base: IndexedSeq[T])(implicit ct: ClassTag[T]): Try[ArraySeq[T]] =
+      Try(throwingApply(base))
+
+    /**
+      * Applies this patch to the given `base` sequence, producing the original `target` sequence or
+      * throwing a [[Patch.Failure]].
+      */
+    def throwingApply(base: IndexedSeq[T])(implicit ct: ClassTag[T]): ArraySeq[T] =
+      Diff.applyPatch(base, baseSize, targetSize, steps)
+  }
+
+  object Patch {
+
+    sealed trait Step[+T] {
+      def baseIx: Int
+      def count: Int
+    }
+
+    type Delete = Op.Delete
+    val Delete = Op.Delete
+
+    type Move = Op.Move
+    val Move = Op.Move
+
+    final case class Insert[T](baseIx: Int, values: ArraySeq[T]) extends Step[T] {
+      def count = values.size
+    }
+
+    sealed abstract class Failure(msg: String) extends RuntimeException(msg)
+
+    final case class BaseSizeMismatch(actualSize: Int, expectedSize: Int)
+        extends Failure(s"Base sequence size was $actualSize but patch expected size $expectedSize")
+
+    final case object IntegrityFailure extends Failure("Patch steps and target length mismatch")
+
+    final private val _ordering: Ordering[Step[_]] = (x: Step[_], y: Step[_]) => x.baseIx - y.baseIx
+    implicit def ordering[T]: Ordering[Step[T]]    = _ordering.asInstanceOf[Ordering[Step[T]]]
   }
 
   /**
-    * Alternative representation of the diffing output.
+    * Alternative representation of the diffing output that holds _all_ data elements, changed and unchanged ones.
     */
   sealed trait Chunk[T]
 
@@ -227,7 +289,7 @@ object Diff {
       * A chunk, which appears identically in both, the base and the target sequence.
       * The `baseElements` and `targetElements` contain identical elements but may differ in their index ranges.
       *
-      * @param baseElements the slice of the base sequence
+      * @param baseElements   the slice of the base sequence
       * @param targetElements the slice of the target sequence
       */
     final case class Unchanged[T](baseElements: Slice[T], targetElements: Slice[T]) extends Chunk[T] {
@@ -236,7 +298,7 @@ object Diff {
     }
 
     /**
-      *  A chunk, which only appears in the base sequence.
+      * A chunk, which only appears in the base sequence.
       *
       * @param baseElements the slice of the base sequence
       */
@@ -258,7 +320,7 @@ object Diff {
       * The `baseElements` appear in the base sequence at the same relative
       * position as the `targetElements` in the target sequence.
       *
-      * @param baseElements the slice of the base sequence
+      * @param baseElements   the slice of the base sequence
       * @param targetElements the slice of the target sequence
       */
     final case class Replaced[T](baseElements: Slice[T], targetElements: Slice[T]) extends Chunk[T] {
@@ -293,6 +355,28 @@ object Diff {
       * [[IndexedSeq]] sequences can be transparently (implicitly) converted into [[Slice]] instances.
       */
     implicit def apply[T](seq: IndexedSeq[T]): Slice[T] = new Slice(seq, 0, seq.size)
+  }
+
+  /**
+    * Allows for mapping indices bidirectionally between the `base` and `target` sequences.
+    */
+  sealed trait Bimap {
+
+    /**
+      * Maps base indices to target indices.
+      *
+      * Returns [[None]] if the given index is outside the index range of the base sequence
+      * or the element at the respective place was deleted and therefore doesn't appear in the target.
+      */
+    def baseToTargetIndex(ix: Int): Option[Int]
+
+    /**
+      * Maps target indices to base indices.
+      *
+      * Returns [[None]] if the given index is outside the index range of the target sequence
+      * or the element at the respective place was insert and therefore doesn't appear in the base.
+      */
+    def targetToBaseIndex(ix: Int): Option[Int]
   }
 
   /**
@@ -614,11 +698,6 @@ object Diff {
         val result        = new Array[Op.DelInsMov](deletes.length + inserts.length) // length is upper bound
         val pairedInserts = new mutable.BitSet(inserts.length)                       // TODO: optimize for len <= 64
 
-        def append(op: Op.DelInsMov, ir: Int): Int = {
-          result(ir) = op
-          ir + 1
-        }
-
         @tailrec def rec(delIx: Int, insIx: Int, resIx: Int): Array[Op.DelInsMov] =
           if (delIx < deletes.length) {
             val del = deletes(delIx)
@@ -630,16 +709,16 @@ object Diff {
             if (del.count == ins.count && !pairedInserts.contains(insIx) && doMatch(0)) {
               // this del and ins match completely, so merge them into an `Op.Move`
               pairedInserts += insIx // remember that this insert is "taken"
-              rec(delIx + 1, 0, append(Op.Move(del.baseIx, ins.baseIx, del.count), resIx))
+              rec(delIx + 1, 0, setAndGetNextIndex(result, resIx, Op.Move(del.baseIx, ins.baseIx, del.count)))
             } else if (insIx + 1 == inserts.length) {
               // we have not found a matching insert for the current delete, so append it and continue with the next one
-              rec(delIx + 1, 0, append(del, resIx))
+              rec(delIx + 1, 0, setAndGetNextIndex(result, resIx, del))
             } else rec(delIx, insIx + 1, resIx)
           } else {
             @tailrec def appendUnpairedInserts(ii: Int, ir: Int): Int =
               if (ii < inserts.length) {
                 if (pairedInserts.contains(ii)) appendUnpairedInserts(ii + 1, ir)
-                else appendUnpairedInserts(ii + 1, append(inserts(ii), ir))
+                else appendUnpairedInserts(ii + 1, setAndGetNextIndex(result, ir, inserts(ii)))
               } else ir
 
             val endIr = appendUnpairedInserts(0, resIx)
@@ -789,14 +868,83 @@ object Diff {
 
       rec(0, 0, 0, 0, null)
     }
+
+    def patch(implicit ct: ClassTag[T]): Patch[T] = {
+      val steps = delInsMovOps.map {
+        case Op.Insert(baseIx, targetIx, count) =>
+          val values = new Array[T](count)
+          @tailrec def rec(i: Int): Array[T] =
+            if (i < values.length) rec(setAndGetNextIndex(values, i, target(targetIx + i))) else values
+          Patch.Insert(baseIx, ArraySeq.unsafeWrapArray(rec(0)))
+        case x: Patch.Step[T] => x
+      }
+      Patch(base.size, target.size, steps)
+    }
   }
 
-  // special floored modulo (instead of plain '%', which is truncated), relying on b never being negative
-  private def mod(a: Int, b: Int): Int = {
-    // an alternative would be ```(b + (a % b)) % b```
-    // but the implementation here should be faster than two divisions
-    val result = a % b
-    if (a >= 0 || a == -b) result else result + b
+  private def applyPatch[T: ClassTag](
+      base: IndexedSeq[T],
+      baseSize: Int,
+      targetSize: Int,
+      steps: ArraySeq[Patch.Step[T]]): ArraySeq[T] =
+    if (base.size == baseSize) {
+      if (steps.size > Int.MaxValue / 2) throw new IllegalArgumentException
+      val allSteps = new Array[Patch.Step[T]](steps.size * 2) // worst case: all steps are moves -> size doubles
+
+      @tailrec def expandSteps(i: Int, j: Int): Int =
+        if (i < steps.size) {
+          val nextj = steps(i) match {
+            case x @ Patch.Move(origIx, _, count) =>
+              setAndGetNextIndex(allSteps, setAndGetNextIndex(allSteps, j, Patch.Delete(origIx, count)), x)
+            case x =>
+              setAndGetNextIndex(allSteps, j, x)
+          }
+          expandSteps(i + 1, nextj)
+        } else j
+
+      val stepsCount = expandSteps(0, 0)
+      util.Arrays.sort(allSteps, 0, stepsCount, Patch.ordering[T])
+
+      val target = new Array[T](targetSize)
+
+      @tailrec def copyFromBase(baseStartIx: Int, baseEndIx: Int, targetIx: Int): Int =
+        if (baseStartIx < baseEndIx) {
+          if (targetIx < target.length) {
+            target(targetIx) = base(baseStartIx)
+            copyFromBase(baseStartIx + 1, baseEndIx, targetIx + 1)
+          } else throw Patch.IntegrityFailure
+        } else targetIx
+
+      @tailrec def applyRemainingSteps(stepsIx: Int, baseIx: Int, targetIx: Int): Array[T] =
+        if (stepsIx < stepsCount) {
+          allSteps(stepsIx) match {
+            case Patch.Delete(bix, count) =>
+              applyRemainingSteps(stepsIx + 1, bix + count, copyFromBase(baseIx, bix, targetIx))
+
+            case Patch.Insert(bix, values) =>
+              val bbix         = math.max(bix, baseIx)
+              val tix          = copyFromBase(baseIx, bbix, targetIx)
+              val valuesArray  = values.unsafeArray.asInstanceOf[Array[T]]
+              val nextTargetIx = tix + valuesArray.length
+              if (nextTargetIx <= target.length) {
+                System.arraycopy(valuesArray, 0, target, tix, valuesArray.length)
+                applyRemainingSteps(stepsIx + 1, bbix, nextTargetIx)
+              } else throw Patch.IntegrityFailure
+
+            case Patch.Move(origIx, destIx, count) =>
+              val tix          = copyFromBase(baseIx, destIx, targetIx)
+              val nextTargetIx = copyFromBase(origIx, origIx + count, tix)
+              applyRemainingSteps(stepsIx + 1, math.max(destIx, baseIx), nextTargetIx)
+          }
+        } else if (copyFromBase(baseIx, base.size, targetIx) == target.length) target
+        else throw Patch.IntegrityFailure
+
+      ArraySeq.unsafeWrapArray(applyRemainingSteps(0, 0, 0))
+    } else throw Patch.BaseSizeMismatch(actualSize = base.size, expectedSize = baseSize)
+
+  @inline private def setAndGetNextIndex[T](array: Array[T], i: Int, value: T): Int = {
+    array(i) = value
+    i + 1
   }
 
   private def failDiff() =

@@ -88,9 +88,6 @@ class OpsTest extends SpliffSuite {
     )
   }
 
-  private def diff(s1: String, s2: String)(expected: Diff.Op*)(implicit l: munit.Location): Unit = {
+  private def diff(s1: String, s2: String)(expected: Diff.Op*)(implicit l: munit.Location): Unit =
     Diff(s1, s2).allOps ==> expected
-
-    Diff.minEditDistance(s1, s2) ==> Diff(s1, s2).delInsOps.map(_.count).sum
-  }
 }
