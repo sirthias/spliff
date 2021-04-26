@@ -10,7 +10,7 @@ package io.bullet.spliff
 
 import io.bullet.spliff.util.{IntArrayStack, SimpleBitSet}
 
-import java.util
+import java.{util => jutil}
 import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
 import scala.collection.IndexedSeqView
@@ -273,7 +273,7 @@ object Diff {
     final case class BaseSizeMismatch(actualSize: Int, expectedSize: Int)
         extends Failure(s"Base sequence size was $actualSize but patch expected size $expectedSize")
 
-    final case object IntegrityFailure extends Failure("Patch steps and target length mismatch")
+    case object IntegrityFailure extends Failure("Patch steps and target length mismatch")
 
     final private val _ordering: Ordering[Step[_]] = (x: Step[_], y: Step[_]) => x.baseIx - y.baseIx
     implicit def ordering[T]: Ordering[Step[T]]    = _ordering.asInstanceOf[Ordering[Step[T]]]
@@ -690,7 +690,7 @@ object Diff {
     def delInsOpsSorted: ArraySeq[Op.DelIns] = {
       val result = delInsOps.sorted
       val array  = result.unsafeArray.asInstanceOf[Array[Op.DelIns]]
-      util.Arrays.sort(array, Op.ordering)
+      jutil.Arrays.sort(array, Op.ordering)
       result // we can return the same instance because it has not leaked to the outside before the potential mutation
     }
 
@@ -726,7 +726,7 @@ object Diff {
               } else ir
 
             val endIr = appendUnpairedInserts(0, resIx)
-            if (endIr < result.length) util.Arrays.copyOfRange(result, 0, endIr) else result
+            if (endIr < result.length) jutil.Arrays.copyOfRange(result, 0, endIr) else result
           }
 
         ArraySeq.unsafeWrapArray(rec(0, 0, 0))
@@ -737,7 +737,7 @@ object Diff {
     def delInsMovOpsSorted: ArraySeq[Op.DelInsMov] = {
       val result = delInsMovOps.sorted
       val array  = result.unsafeArray.asInstanceOf[Array[Op.DelInsMov]]
-      util.Arrays.sort(array, Op.ordering)
+      jutil.Arrays.sort(array, Op.ordering)
       result // we can return the same instance because it has not leaked to the outside before the potential mutation
     }
 
@@ -761,7 +761,7 @@ object Diff {
         } else resIx
 
       val ir = rec(0, 0, null)
-      if (ir < result.length) ArraySeq.unsafeWrapArray(util.Arrays.copyOf(result, ir))
+      if (ir < result.length) ArraySeq.unsafeWrapArray(jutil.Arrays.copyOf(result, ir))
       else dimOps.asInstanceOf[ArraySeq[Op]] // if there are no replaces we can simply reuse the existing instance
     }
 
@@ -783,12 +783,12 @@ object Diff {
           val newTargetCursor = mapUp(baseCursor, targetCursor, op.baseIx)
           op match {
             case Op.Delete(baseIx, count) =>
-              util.Arrays.fill(bttMap, baseIx, baseIx + count, -1)
+              jutil.Arrays.fill(bttMap, baseIx, baseIx + count, -1)
               rec(delInsIx + 1, baseIx + count, newTargetCursor)
 
             case Op.Insert(baseIx, targetIx, count) =>
               if (newTargetCursor != targetIx) throw new IllegalStateException
-              util.Arrays.fill(ttbMap, targetIx, targetIx + count, -1)
+              jutil.Arrays.fill(ttbMap, targetIx, targetIx + count, -1)
               rec(delInsIx + 1, math.max(baseCursor, baseIx), targetIx + count)
           }
         } else { mapUp(baseCursor, targetCursor, bttMap.length); () }
@@ -880,7 +880,7 @@ object Diff {
           @tailrec def rec(i: Int): Array[T] =
             if (i < values.length) rec(setAndGetNextIndex(values, i, target(targetIx + i))) else values
           Patch.Insert(baseIx, ArraySeq.unsafeWrapArray(rec(0)))
-        case x: Patch.Step[T] => x
+        case x: Patch.Step[_] => x.asInstanceOf[Patch.Step[T]]
       }
       Patch(base.size, target.size, steps)
     }
@@ -907,7 +907,7 @@ object Diff {
         } else j
 
       val stepsCount = expandSteps(0, 0)
-      util.Arrays.sort(allSteps, 0, stepsCount, Patch.ordering[T])
+      jutil.Arrays.sort(allSteps, 0, stepsCount, Patch.ordering[T])
 
       val target = new Array[T](targetSize)
 

@@ -10,12 +10,12 @@ package io.bullet.spliff.util
 
 import scala.collection.mutable
 
-sealed abstract class SimpleBitSet {
+sealed abstract private[spliff] class SimpleBitSet {
   def contains(i: Int): Boolean
   def +=(i: Int): Unit
 }
 
-object SimpleBitSet {
+private[spliff] object SimpleBitSet {
 
   def withSize(size: Int): SimpleBitSet = if (size <= 64) new Small else new Large(size)
 
