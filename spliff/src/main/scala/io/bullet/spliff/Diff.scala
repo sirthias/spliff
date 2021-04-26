@@ -8,10 +8,11 @@
 
 package io.bullet.spliff
 
+import io.bullet.spliff.util.{IntArrayStack, SimpleBitSet}
+
 import java.util
 import scala.annotation.tailrec
 import scala.collection.immutable.ArraySeq
-import scala.collection.mutable
 import scala.collection.IndexedSeqView
 import scala.reflect.ClassTag
 import scala.util.Try
@@ -504,10 +505,8 @@ object Diff {
     val deltaOdd = (Delta & 1) != 0
     val Vf       = new Array[Int](MAX2)
     val Vb       = new Array[Int](MAX2)
-
-    def vf(ix: Int) = Vf(if (ix >= 0) ix else MAX2 + ix)
-    def vb(ix: Int) = Vb(if (ix >= 0) ix else MAX2 + ix)
-
+    @inline def vf(ix: Int) = Vf(if (ix >= 0) ix else MAX2 + ix)
+    @inline def vb(ix: Int) = Vb(if (ix >= 0) ix else MAX2 + ix)
     var D      = 0
     val Dlimit = (MAX2 >> 1) + (MAX2 & 1)
     while (D < Dlimit) {
@@ -577,7 +576,7 @@ object Diff {
           _lastInsCount = count
         } else _lastInsCount += count
 
-      def flushLastOps(): Unit = {
+      @inline def flushLastOps(): Unit = {
         if (_lastDelBaseIx >= 0) deletes += Op.Delete(_lastDelBaseIx, _lastDelCount)
         if (_lastInsBaseIx >= 0) inserts += Op.Insert(_lastInsBaseIx, _lastInsTargetIx, _lastInsCount)
       }
@@ -696,7 +695,7 @@ object Diff {
 
       if (deletes.length > 0 && inserts.length > 0) {
         val result        = new Array[Op.DelInsMov](deletes.length + inserts.length) // length is upper bound
-        val pairedInserts = new mutable.BitSet(inserts.length)                       // TODO: optimize for len <= 64
+        val pairedInserts = SimpleBitSet.withSize(inserts.length)
 
         @tailrec def rec(delIx: Int, insIx: Int, resIx: Int): Array[Op.DelInsMov] =
           if (delIx < deletes.length) {
@@ -949,28 +948,4 @@ object Diff {
 
   private def failDiff() =
     throw new RuntimeException("Diff algorithm unexpectedly failed. Were the data mutated during the diffing process?")
-
-  private class IntArrayStack(initialSize: Int) {
-    private[this] var array    = new Array[Int](initialSize)
-    private[this] var top: Int = _
-
-    def nonEmpty: Boolean = top != 0
-
-    def push4(a: Int, b: Int, c: Int, d: Int): this.type = {
-      while (top + 4 > array.length) {
-        array = java.util.Arrays.copyOf(array, array.length << 1)
-      }
-      array(top + 0) = a
-      array(top + 1) = b
-      array(top + 2) = c
-      array(top + 3) = d
-      top += 4
-      this
-    }
-
-    @inline def pop(): Int = {
-      top -= 1
-      array(top)
-    }
-  }
 }
