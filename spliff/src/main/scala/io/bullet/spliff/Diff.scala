@@ -512,7 +512,7 @@ object Diff {
         val i     = stack.pop()
         val L     = N + M
         val Z     = 2 * Math.min(N, M) + 2
-        val modL2 = mod(L, 2)
+        val modL2 = Math.floorMod(L, 2)
         if (N > 0 && M > 0) {
           val w      = N - M
           val g      = new Array[Int](Z)
@@ -530,8 +530,8 @@ object Diff {
               var k      = -(h - 2 * Math.max(0, h - M))
               val kLimit = h - 2 * Math.max(0, h - N) + 1
               while (k < kLimit) {
-                val mkz0 = mod(k - 1, Z)
-                val mkz1 = mod(k + 1, Z)
+                val mkz0 = Math.floorMod(k - 1, Z)
+                val mkz1 = Math.floorMod(k + 1, Z)
                 var a    = if (k == -h || k != h && c(mkz0) < c(mkz1)) c(mkz1) else c(mkz0) + 1
                 var b    = a - k
                 val s    = a
@@ -539,10 +539,10 @@ object Diff {
                 var ii   = ii0 + m * a
                 var jj   = jj0 + m * b
                 while (a < N && b < M && eq(base(ii), target(jj))) { a += 1; b += 1; ii += m; jj += m }
-                val modKZ = mod(k, Z)
+                val modKZ = Math.floorMod(k, Z)
                 c(modKZ) = a
                 val z = -(k - w)
-                if (modL2 == o && z >= -(h - o) && z <= h - o && c(modKZ) + d(mod(z, Z)) >= N) {
+                if (modL2 == o && z >= -(h - o) && z <= h - o && c(modKZ) + d(Math.floorMod(z, Z)) >= N) {
                   val _D = 2 * h - o
                   var x  = s
                   var y  = t
@@ -791,10 +791,12 @@ object Diff {
     }
   }
 
-  // special floored module (instead of plain '%', which is truncated), relying on b never being negative
+  // special floored modulo (instead of plain '%', which is truncated), relying on b never being negative
   private def mod(a: Int, b: Int): Int = {
+    // an alternative would be ```(b + (a % b)) % b```
+    // but the implementation here should be faster than two divisions
     val result = a % b
-    if (a >= 0) result else result + b
+    if (a >= 0 || a == -b) result else result + b
   }
 
   private def failDiff() =
