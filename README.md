@@ -29,7 +29,7 @@ The _spliff_ artifacts live on Maven Central and can be tied into your [SBT] pro
 
 ```scala
 libraryDependencies ++= Seq(
-  "io.bullet" %% "spliff" % "0.5.1"
+  "io.bullet" %% "spliff" % "0.6.0"
 )
 ```
 

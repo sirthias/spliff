@@ -1,3 +1,14 @@
+Version 0.6.0 (2021-04-26)
+--------------------------
+
+- improved modelling of `Diff.Op.Move`
+- fixed ArrayIndexOutOfBoundsException in certain cases
+- implemented `Diff.Patch`
+- greatly improve test coverage
+- improved naming of `Diff.Chunk` ADT subs
+- improved and extended documentation
+
+
 Version 0.5.1 (2021-04-23)
 --------------------------
 
