@@ -107,6 +107,28 @@ sealed abstract class Diff[T] {
     * Creates a bidirectional index mapping between [[base]] and [[target]], taking moves into account.
     */
   def bimap: Diff.Bimap
+
+  /**
+    * Returns a longest common subsequence of the `base` and `target` sequences.
+    * or [[None]], if the two sequences have no elements in common.
+    * Stacksafe and reasonably efficient.
+    *
+    * NOTE: If you only need the `longestCommonSubsequence` then directly calling
+    * `Diff.longestCommonSubsequence(base, target)` is more efficient than
+    * `Diff(base, target).longestCommonSubsequence`!
+    */
+  def longestCommonSubsequence(implicit ct: ClassTag[T]): ArraySeq[T]
+
+  /**
+    * Returns the minimum number of edits required to transform `base` and `target`,
+    * whereby one "edit" corresponds to deleting or inserting one single element.
+    *
+    * Same as `delInsOps.map(_.count).sum` but slightly more efficient.
+    *
+    * NOTE: If you only need the `minEditDistance` then directly calling `Diff.minEditDistance(base, target)`
+    * is more efficient than `Diff(base, target).minEditDistance`!
+    */
+  def minEditDistance: Int
 }
 
 object Diff {
@@ -461,7 +483,7 @@ object Diff {
     * Returns the minimum number of edits required to transform `base` and `target`,
     * whereby one "edit" corresponds to deleting or inserting one single element.
     *
-    * Equal to `Diff(base, target).delInsOps.size` but more efficient.
+    * Equal to `Diff(base, target).delInsOps.map(_.count).sum` but more efficient.
     */
   def minEditDistance[T](base: IndexedSeq[T], target: IndexedSeq[T])(implicit eq: Eq[T]): Int = {
     // Optimized transcription of the "myers_diff_length_half_memory" implementation in
@@ -763,6 +785,13 @@ object Diff {
       val ir = rec(0, 0, null)
       if (ir < result.length) ArraySeq.unsafeWrapArray(jutil.Arrays.copyOf(result, ir))
       else dimOps.asInstanceOf[ArraySeq[Op]] // if there are no replaces we can simply reuse the existing instance
+    }
+
+    def longestCommonSubsequence(implicit ct: ClassTag[T]) = Diff.longestCommonSubsequence(base, target)
+
+    def minEditDistance = {
+      val sumCount = (_: Int) + (_: Op.DelIns).count
+      deletes.foldLeft(0)(sumCount) + inserts.foldLeft(0)(sumCount)
     }
 
     def basicBimap: Bimap = {
