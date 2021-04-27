@@ -216,8 +216,7 @@ The name _spliff_ is a [portmanteau] of the words "split" and "difference" allud
 algorithm, which divides the problem of finding a suitable diff into two parts, that are then solved separately
 and recursively.
 
-Any resemblance to other, overloaded meanings of the word "spliff" is purely coincidental.  
-Of course.
+There is, of course, no relationship with other, potentially overloaded meanings of the word "spliff".
 
 
 License
