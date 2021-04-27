@@ -239,6 +239,11 @@ object Diff {
   final case class Patch[T](baseSize: Int, targetSize: Int, steps: ArraySeq[Patch.Step[T]]) {
 
     /**
+      * True if the patch is a NOP, i.e. doesn't affect the `base` at all when applied.
+      */
+    def isEmpty: Boolean = steps.isEmpty
+
+    /**
       * Returns an equivalent patch that has all its steps sorted by `baseIx`.
       *
       * NOTE: The steps will be sorted anyway during application of the patch against a `base` sequence,
@@ -949,7 +954,7 @@ object Diff {
 
       @tailrec def copyFromBase(baseStartIx: Int, baseEndIx: Int, targetIx: Int): Int =
         if (baseStartIx < baseEndIx) {
-          if (targetIx < target.length) {
+          if (targetIx < targetSize) {
             target(targetIx) = base(baseStartIx)
             copyFromBase(baseStartIx + 1, baseEndIx, targetIx + 1)
           } else throw Patch.IntegrityFailure
@@ -966,7 +971,7 @@ object Diff {
               val tix          = copyFromBase(baseIx, bbix, targetIx)
               val valuesArray  = values.unsafeArray.asInstanceOf[Array[T]]
               val nextTargetIx = tix + valuesArray.length
-              if (nextTargetIx <= target.length) {
+              if (nextTargetIx <= targetSize) {
                 System.arraycopy(valuesArray, 0, target, tix, valuesArray.length)
                 applyRemainingSteps(stepsIx + 1, bbix, nextTargetIx)
               } else throw Patch.IntegrityFailure
@@ -976,7 +981,7 @@ object Diff {
               val nextTargetIx = copyFromBase(origIx, origIx + count, tix)
               applyRemainingSteps(stepsIx + 1, math.max(destIx, baseIx), nextTargetIx)
           }
-        } else if (copyFromBase(baseIx, base.size, targetIx) == target.length) target
+        } else if (copyFromBase(baseIx, base.size, targetIx) == targetSize) target
         else throw Patch.IntegrityFailure
 
       ArraySeq.unsafeWrapArray(applyRemainingSteps(0, 0, 0))
