@@ -299,6 +299,13 @@ object Diff {
 
     final private val _ordering: Ordering[Step[_]] = (x: Step[_], y: Step[_]) => x.baseIx - y.baseIx
     implicit def ordering[T]: Ordering[Step[T]]    = _ordering.asInstanceOf[Ordering[Step[T]]]
+
+    /**
+      * Creates a `Patch` only from the `baseSize` and the `steps`.
+      * The `targetSize` is derived from the steps.
+      */
+    def apply[T](baseSize: Int, steps: ArraySeq[Patch.Step[T]]): Patch[T] =
+      Diff.patchFromBaseSizeAndSteps(baseSize, steps)
   }
 
   /**
@@ -974,6 +981,15 @@ object Diff {
 
       ArraySeq.unsafeWrapArray(applyRemainingSteps(0, 0, 0))
     } else throw Patch.BaseSizeMismatch(actualSize = base.size, expectedSize = baseSize)
+
+  private def patchFromBaseSizeAndSteps[T](baseSize: Int, steps: ArraySeq[Patch.Step[T]]): Patch[T] = {
+    val targetSize = steps.foldLeft(baseSize) {
+      case (acc, Patch.Delete(_, count))  => acc - count
+      case (acc, Patch.Insert(_, values)) => acc + values.size
+      case (acc, _: Patch.Move)           => acc
+    }
+    Patch(baseSize, targetSize, steps)
+  }
 
   @inline private def setAndGetNextIndex[T](array: Array[T], i: Int, value: T): Int = {
     array(i) = value
