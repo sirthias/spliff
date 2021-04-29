@@ -15,9 +15,8 @@ private[spliff] class IntArrayStack(initialSize: Int) {
   def nonEmpty: Boolean = top != 0
 
   def push4(a: Int, b: Int, c: Int, d: Int): this.type = {
-    while (top + 4 > array.length) {
+    while (top + 4 > array.length)
       array = java.util.Arrays.copyOf(array, array.length << 1)
-    }
     array(top + 0) = a
     array(top + 1) = b
     array(top + 2) = c

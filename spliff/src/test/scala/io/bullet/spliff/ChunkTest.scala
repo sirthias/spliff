@@ -271,29 +271,25 @@ class ChunkTest extends SpliffSuite {
     } ==> expected.foldLeft((0, 0, Seq.empty[Product]))((tuple, f: ChunkFun) => f(tuple))._3
   }
 
-  private def inBoth(value: String): ChunkFun = {
-    case (i, j, chunks) =>
-      val i2 = i + value.length
-      val j2 = j + value.length
-      (i2, j2, chunks :+ ((Diff.Chunk.InBoth, ((i, i2, value), (j, j2, value)))))
+  private def inBoth(value: String): ChunkFun = { case (i, j, chunks) =>
+    val i2 = i + value.length
+    val j2 = j + value.length
+    (i2, j2, chunks :+ ((Diff.Chunk.InBoth, ((i, i2, value), (j, j2, value)))))
   }
 
-  private def inFirst(value: String): ChunkFun = {
-    case (i, j, chunks) =>
-      val i2 = i + value.length
-      (i2, j, chunks :+ ((Diff.Chunk.InBase, (i, i2, value))))
+  private def inFirst(value: String): ChunkFun = { case (i, j, chunks) =>
+    val i2 = i + value.length
+    (i2, j, chunks :+ ((Diff.Chunk.InBase, (i, i2, value))))
   }
 
-  private def inSecond(value: String): ChunkFun = {
-    case (i, j, chunks) =>
-      val j2 = j + value.length
-      (i, j2, chunks :+ ((Diff.Chunk.InTarget, (j, j2, value))))
+  private def inSecond(value: String): ChunkFun = { case (i, j, chunks) =>
+    val j2 = j + value.length
+    (i, j2, chunks :+ ((Diff.Chunk.InTarget, (j, j2, value))))
   }
 
-  private def unique(a: String, b: String): ChunkFun = {
-    case (i, j, chunks) =>
-      val i2 = i + a.length
-      val j2 = j + b.length
-      (i2, j2, chunks :+ ((Diff.Chunk.Distinct, ((i, i2, a), (j, j2, b)))))
+  private def unique(a: String, b: String): ChunkFun = { case (i, j, chunks) =>
+    val i2 = i + a.length
+    val j2 = j + b.length
+    (i2, j2, chunks :+ ((Diff.Chunk.Distinct, ((i, i2, a), (j, j2, b)))))
   }
 }
