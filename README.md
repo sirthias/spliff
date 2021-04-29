@@ -44,7 +44,7 @@ Simply pick the one(s) that are most suited to the task you are trying to solve:
 
 ### 1. Basic Operations
 
-On the most basic level _spliff_ uses Myers algorithm to describe the difference between two sequences `base` and
+On the most basic level _spliff_ uses Myers' algorithm to describe the difference between two sequences `base` and
 `target` as a number of `Diff.Op.Delete` and `Diff.Op.Insert` operations. Instances of these types can be regarded
 as mere "decorators" on the underlying `base` and `target` sequences as they don't hold any data elements themselves.
 They merely describe in terms of index ranges, which data elements must be deleted or inserted in order to transform
@@ -166,7 +166,7 @@ chunks ==> Seq(
 
 ### 5. Bimap
 
-Sometime you need a (bidirectional) mapping between the indices of `base` and the indices of `target`.
+Sometimes you need a (bidirectional) mapping between the indices of `base` and the indices of `target`.
 _spliff_ makes this readily available.
 
 Example:
@@ -180,8 +180,8 @@ val diff = Diff("the base sequence", "the target sequence")
 // a bidirectional mapping between each individual base and target index, where possible
 val bimap: Diff.Bimap = diff.bimap
 
-bimap.baseToTargetIndex(10) ==> 12
-bimap.targetToBaseIndex(12) ==> 10
+bimap.baseToTargetIndex(10) ==> Some(12)
+bimap.targetToBaseIndex(12) ==> Some(10)
 ```
 
 
@@ -212,7 +212,7 @@ that hard to read. (Even though the algorithmic core parts themselves are certai
 Why "spliff"?
 -------------
 
-The name _spliff_ is a [portmanteau] of the words "split" and "difference" alluding to the core principle of Myers
+The name _spliff_ is a [portmanteau] of the words "split" and "difference" alluding to the core principle of Myers'
 algorithm, which divides the problem of finding a suitable diff into two parts, that are then solved separately
 and recursively.
 
