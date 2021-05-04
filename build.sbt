@@ -25,7 +25,7 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "org.scalameta"  %% "munit"            % "0.7.25" % Test,
     "org.scalameta"  %% "munit-scalacheck" % "0.7.25" % Test,
-    "org.scalacheck" %% "scalacheck"       % "1.15.3" % Test
+    "org.scalacheck" %% "scalacheck"       % "1.15.4" % Test
   ),
   Compile / doc / scalacOptions += "-no-link-warnings",
   scalacOptions ++= Seq(
