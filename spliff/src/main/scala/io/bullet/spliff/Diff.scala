@@ -17,8 +17,7 @@ import scala.collection.IndexedSeqView
 import scala.reflect.ClassTag
 import scala.util.Try
 
-/**
-  * The result of running Myers' diff algorithm against two [[IndexedSeq]] instances.
+/** The result of running Myers' diff algorithm against two [[IndexedSeq]] instances.
   * Provides the basic [[deletes]] and [[inserts]] operations required to transform [[base]] into [[target]]
   * as well as higher-level logic that refines the basic result (like detecting "move" and "replace" ops).
   *
@@ -26,40 +25,33 @@ import scala.util.Try
   */
 sealed abstract class Diff[T] {
 
-  /**
-    * The base sequence this [[Diff]] was created against.
+  /** The base sequence this [[Diff]] was created against.
     */
   def base: IndexedSeq[T]
 
-  /**
-    * The target sequence this [[Diff]] was created against.
+  /** The target sequence this [[Diff]] was created against.
     */
   def target: IndexedSeq[T]
 
-  /**
-    * The [[Diff.Op.Delete]] operations that, together with [[inserts]],
+  /** The [[Diff.Op.Delete]] operations that, together with [[inserts]],
     * are required to transform [[base]] into [[target]].
     */
   def deletes: ArraySeq[Diff.Op.Delete]
 
-  /**
-    * The [[Diff.Op.Insert]] operations that, together with [[deletes]],
+  /** The [[Diff.Op.Insert]] operations that, together with [[deletes]],
     * are required to transform [[base]] into [[target]].
     */
   def inserts: ArraySeq[Diff.Op.Insert]
 
-  /**
-    * Returns the basic [[deletes]] and [[inserts]] in one sequence, with the [[deletes]] preceding the [[inserts]].
+  /** Returns the basic [[deletes]] and [[inserts]] in one sequence, with the [[deletes]] preceding the [[inserts]].
     */
   def delInsOps: ArraySeq[Diff.Op.DelIns]
 
-  /**
-    * Returns the [[delInsOps]] sorted by `baseIx`.
+  /** Returns the [[delInsOps]] sorted by `baseIx`.
     */
   def delInsOpsSorted: ArraySeq[Diff.Op.DelIns]
 
-  /**
-    * Returns an optimal number of the [[Diff.Op.DelInsMov]] operations required to transform [[base]] into [[target]].
+  /** Returns an optimal number of the [[Diff.Op.DelInsMov]] operations required to transform [[base]] into [[target]].
     * Spends an additional O(N^^2) time on finding [[Diff.Op.Move]] operations.
     *
     * Note that a move is only identified as such if a [[Diff.Op.Delete]] has a directly corresponding
@@ -68,13 +60,11 @@ sealed abstract class Diff[T] {
     */
   def delInsMovOps: ArraySeq[Diff.Op.DelInsMov]
 
-  /**
-    * Returns the [[delInsMovOps]] sorted by `baseIx`.
+  /** Returns the [[delInsMovOps]] sorted by `baseIx`.
     */
   def delInsMovOpsSorted: ArraySeq[Diff.Op.DelInsMov]
 
-  /**
-    * Identifies all operation types ([[Diff.Op.Delete]], [[Diff.Op.Insert]], [[Diff.Op.Move]] and [[Diff.Op.Replace]])
+  /** Identifies all operation types ([[Diff.Op.Delete]], [[Diff.Op.Insert]], [[Diff.Op.Move]] and [[Diff.Op.Replace]])
     * and returns them sorted by `baseIx`.
     *
     * The difference to [[delInsMovOpsSorted]] is that deletes and inserts targeting the same `baseIx` are combined into
@@ -82,20 +72,17 @@ sealed abstract class Diff[T] {
     */
   def allOps: ArraySeq[Diff.Op]
 
-  /**
-    * Identifies move operations and packages the diff data into a [[Diff.Patch]] instances,
+  /** Identifies move operations and packages the diff data into a [[Diff.Patch]] instances,
     * which contains all information required to produce the `target` sequence when only the `base` sequence is given.
     */
   def patch(implicit ct: ClassTag[T]): Diff.Patch[T]
 
-  /**
-    * Segments the inputs into a sequence of chunks representing the diff in a alternative form,
+  /** Segments the inputs into a sequence of chunks representing the diff in a alternative form,
     * that is sometimes better suited to the task at hand than [[allOps]] and friends.
     */
   def chunks: ArraySeq[Diff.Chunk[T]]
 
-  /**
-    * Creates a bidirectional index mapping between [[base]] and [[target]], without taking moves into account.
+  /** Creates a bidirectional index mapping between [[base]] and [[target]], without taking moves into account.
     * This means that elements that have been moved will not have their indices mapped.
     * They simply appear as "not present" in the other sequence.
     *
@@ -103,13 +90,11 @@ sealed abstract class Diff[T] {
     */
   def basicBimap: Diff.Bimap
 
-  /**
-    * Creates a bidirectional index mapping between [[base]] and [[target]], taking moves into account.
+  /** Creates a bidirectional index mapping between [[base]] and [[target]], taking moves into account.
     */
   def bimap: Diff.Bimap
 
-  /**
-    * Returns a longest common subsequence of the `base` and `target` sequences.
+  /** Returns a longest common subsequence of the `base` and `target` sequences.
     * or [[None]], if the two sequences have no elements in common.
     * Stacksafe and reasonably efficient.
     *
@@ -119,8 +104,7 @@ sealed abstract class Diff[T] {
     */
   def longestCommonSubsequence(implicit ct: ClassTag[T]): ArraySeq[T]
 
-  /**
-    * Returns the minimum number of edits required to transform `base` and `target`,
+  /** Returns the minimum number of edits required to transform `base` and `target`,
     * whereby one "edit" corresponds to deleting or inserting one single element.
     *
     * Same as `delInsOps.map(_.count).sum` but slightly more efficient.
@@ -133,8 +117,7 @@ sealed abstract class Diff[T] {
 
 object Diff {
 
-  /**
-    * An ADT for all "operations" the diff algorithm can derive.
+  /** An ADT for all "operations" the diff algorithm can derive.
     * Operations don't contain any elements themselves, they only hold indices into the `base` and `target` sequences
     * for maximum efficiency.
     *
@@ -143,28 +126,24 @@ object Diff {
     */
   sealed trait Op {
 
-    /**
-      * the index of the first element in the base sequence that is affected by this operation
+    /** the index of the first element in the base sequence that is affected by this operation
       */
     def baseIx: Int
   }
 
   object Op {
 
-    /**
-      * The super type of [[Delete]], [[Insert]] and [[Move]].
+    /** The super type of [[Delete]], [[Insert]] and [[Move]].
       */
     sealed trait DelInsMov extends Op {
       def count: Int
     }
 
-    /**
-      * The super type of the two basic diff operations returned by Myers' Diff algorithm, [[Delete]] and [[Insert]].
+    /** The super type of the two basic diff operations returned by Myers' Diff algorithm, [[Delete]] and [[Insert]].
       */
     sealed trait DelIns extends DelInsMov
 
-    /**
-      * Represents a number of contiguous elements that is present in the base sequence but not in the target.
+    /** Represents a number of contiguous elements that is present in the base sequence but not in the target.
       *
       * @param baseIx the index of the first element in the base sequence that is deleted
       * @param count  the number of elements in the deleted chunk
@@ -173,8 +152,7 @@ object Diff {
       if (count <= 0) throw new IllegalArgumentException
     }
 
-    /**
-      * Represents a number of contiguous elements that is present in the target sequence but not in the base.
+    /** Represents a number of contiguous elements that is present in the target sequence but not in the base.
       *
       * @param baseIx   the index of the element in the base sequence where the new elements are inserted
       * @param targetIx the index of the first element in the target sequence that is inserted
@@ -184,8 +162,7 @@ object Diff {
       if (count <= 0) throw new IllegalArgumentException
     }
 
-    /**
-      * Represents a number of contiguous elements that is present in both the base and target sequences
+    /** Represents a number of contiguous elements that is present in both the base and target sequences
       * but in a different position in the sequence relative to its surrounding elements.
       *
       * @param origIx the index into the base sequence where the elements are moved from (i.e. deleted)
@@ -196,13 +173,11 @@ object Diff {
       if (count <= 0) throw new IllegalArgumentException
       if (origIx == destIx) throw new IllegalArgumentException
 
-      /**
-        * True if this operation moves elements from higher indices to lower indices
+      /** True if this operation moves elements from higher indices to lower indices
         */
       def isForwardMove: Boolean = destIx < origIx
 
-      /**
-        * True if this operation moves elements from lower indices to higher indices
+      /** True if this operation moves elements from lower indices to higher indices
         */
       def isBackwardMove: Boolean = origIx < destIx
 
@@ -210,8 +185,7 @@ object Diff {
       def baseIx = destIx
     }
 
-    /**
-      * Represents a number of contiguous elements in the base that was replaced
+    /** Represents a number of contiguous elements in the base that was replaced
       * with a chunk of a potentially differing (non-zero) length in the target.
       *
       * This operation is essentially a combination of a [[Delete]] and an [[Insert]] at the same `baseIx`.
@@ -230,21 +204,18 @@ object Diff {
     implicit def ordering[T <: Op]: Ordering[T] = _ordering.asInstanceOf[Ordering[T]]
   }
 
-  /**
-    * A [[Patch]] encapsulates all information required to transform the `base` sequence into the `target` sequence.
+  /** A [[Patch]] encapsulates all information required to transform the `base` sequence into the `target` sequence.
     *
     * In addition to the data of which elements need to be deleted and/or moved it also contains the actual elements
     * that are to be inserted.
     */
   final case class Patch[T](baseSize: Int, targetSize: Int, steps: ArraySeq[Patch.Step[T]]) {
 
-    /**
-      * True if the patch is a NOP, i.e. doesn't affect the `base` at all when applied.
+    /** True if the patch is a NOP, i.e. doesn't affect the `base` at all when applied.
       */
     def isEmpty: Boolean = steps.isEmpty
 
-    /**
-      * Returns an equivalent patch that has all its steps sorted by `baseIx`.
+    /** Returns an equivalent patch that has all its steps sorted by `baseIx`.
       *
       * NOTE: The steps will be sorted anyway during application of the patch against a `base` sequence,
       * so the steps can be held in any order in the [[Patch]] sequence.
@@ -253,25 +224,21 @@ object Diff {
       */
     def sorted: Patch[T] = copy(steps = steps.sorted)
 
-    /**
-      * Applies this patch to the given `base` sequence, producing either the original `target` sequence or an error.
+    /** Applies this patch to the given `base` sequence, producing either the original `target` sequence or an error.
       */
     def apply(base: IndexedSeq[T])(implicit ct: ClassTag[T]): Either[Patch.Failure, ArraySeq[T]] =
-      try {
-        Right(throwingApply(base))
-      } catch {
+      try Right(throwingApply(base))
+      catch {
         case e: Patch.Failure => Left(e)
       }
 
-    /**
-      * Applies this patch to the given `base` sequence, producing a [[Try]] instance holding either the original
+    /** Applies this patch to the given `base` sequence, producing a [[Try]] instance holding either the original
       * `target` sequence or a [[Patch.Failure]].
       */
     def tryApply(base: IndexedSeq[T])(implicit ct: ClassTag[T]): Try[ArraySeq[T]] =
       Try(throwingApply(base))
 
-    /**
-      * Applies this patch to the given `base` sequence, producing the original `target` sequence or
+    /** Applies this patch to the given `base` sequence, producing the original `target` sequence or
       * throwing a [[Patch.Failure]].
       */
     def throwingApply(base: IndexedSeq[T])(implicit ct: ClassTag[T]): ArraySeq[T] =
@@ -305,23 +272,20 @@ object Diff {
     final private val _ordering: Ordering[Step[_]] = (x: Step[_], y: Step[_]) => x.baseIx - y.baseIx
     implicit def ordering[T]: Ordering[Step[T]]    = _ordering.asInstanceOf[Ordering[Step[T]]]
 
-    /**
-      * Creates a `Patch` only from the `baseSize` and the `steps`.
+    /** Creates a `Patch` only from the `baseSize` and the `steps`.
       * The `targetSize` is derived from the steps.
       */
     def apply[T](baseSize: Int, steps: ArraySeq[Patch.Step[T]]): Patch[T] =
       Diff.patchFromBaseSizeAndSteps(baseSize, steps)
   }
 
-  /**
-    * Alternative representation of the diffing output that holds _all_ data elements, changed and unchanged ones.
+  /** Alternative representation of the diffing output that holds _all_ data elements, changed and unchanged ones.
     */
   sealed trait Chunk[T]
 
   object Chunk {
 
-    /**
-      * A chunk, which appears identically in both, the base and the target sequence.
+    /** A chunk, which appears identically in both, the base and the target sequence.
       * The `baseElements` and `targetElements` contain identical elements but may differ in their index ranges.
       *
       * @param baseElements   the slice of the base sequence
@@ -331,14 +295,12 @@ object Diff {
       if (baseElements.isEmpty) throw new IllegalArgumentException
       if (baseElements.length != targetElements.length) throw new IllegalStateException
 
-      /**
-        * Source-agnostic access to the unchanged slice of data elements.
+      /** Source-agnostic access to the unchanged slice of data elements.
         */
       def elements: IndexedSeqView[T] = baseElements
     }
 
-    /**
-      * A chunk, which only appears in the base sequence.
+    /** A chunk, which only appears in the base sequence.
       *
       * @param elements the slice of the base sequence
       */
@@ -346,8 +308,7 @@ object Diff {
       if (elements.isEmpty) throw new IllegalArgumentException
     }
 
-    /**
-      * A chunk, which only appears in the target sequence.
+    /** A chunk, which only appears in the target sequence.
       *
       * @param elements the slice of the target sequence
       */
@@ -355,8 +316,7 @@ object Diff {
       if (elements.isEmpty) throw new IllegalArgumentException
     }
 
-    /**
-      * A chunk, which combines two chunks that are unique to each sequence.
+    /** A chunk, which combines two chunks that are unique to each sequence.
       * The `baseElements` appear in the base sequence at the same relative
       * position as the `targetElements` in the target sequence.
       *
@@ -369,8 +329,7 @@ object Diff {
     }
   }
 
-  /**
-    * An [[IndexedSeqView.Slice]] that surfaces the underlying sequence as well as the index range.
+  /** An [[IndexedSeqView.Slice]] that surfaces the underlying sequence as well as the index range.
     */
   final class Slice[T](val underlying: IndexedSeq[T], _from: Int, _until: Int)
       extends IndexedSeqView.Slice[T](underlying, _from, _until) {
@@ -378,8 +337,7 @@ object Diff {
     def from: Int  = lo
     def until: Int = hi
 
-    /**
-      * Merges this slice with the given slice.
+    /** Merges this slice with the given slice.
       * Requires that the two slices represent directly adjacent chunks of the underlying sequence.
       * If not an [[IllegalArgumentException]] is thrown.
       */
@@ -391,27 +349,23 @@ object Diff {
 
   object Slice {
 
-    /**
-      * [[IndexedSeq]] sequences can be transparently (implicitly) converted into [[Slice]] instances.
+    /** [[IndexedSeq]] sequences can be transparently (implicitly) converted into [[Slice]] instances.
       */
     implicit def apply[T](seq: IndexedSeq[T]): Slice[T] = new Slice(seq, 0, seq.size)
   }
 
-  /**
-    * Allows for mapping indices bidirectionally between the `base` and `target` sequences.
+  /** Allows for mapping indices bidirectionally between the `base` and `target` sequences.
     */
   sealed trait Bimap {
 
-    /**
-      * Maps base indices to target indices.
+    /** Maps base indices to target indices.
       *
       * Returns [[None]] if the given index is outside the index range of the base sequence
       * or the element at the respective place was deleted and therefore doesn't appear in the target.
       */
     def baseToTargetIndex(ix: Int): Option[Int]
 
-    /**
-      * Maps target indices to base indices.
+    /** Maps target indices to base indices.
       *
       * Returns [[None]] if the given index is outside the index range of the target sequence
       * or the element at the respective place was insert and therefore doesn't appear in the base.
@@ -419,8 +373,7 @@ object Diff {
     def targetToBaseIndex(ix: Int): Option[Int]
   }
 
-  /**
-    * Very simple equality type class, which allows for customizing the comparison logic employed by the diff algorith.
+  /** Very simple equality type class, which allows for customizing the comparison logic employed by the diff algorith.
     * By default universal value equality is used.
     */
   trait Eq[T] {
@@ -433,8 +386,7 @@ object Diff {
     implicit def default[T]: Eq[T]      = _default.asInstanceOf[Eq[T]]
   }
 
-  /**
-    * Runs a relatively efficient, stacksafe, linear space implementation of the Myers diff algorithm and returns the
+  /** Runs a relatively efficient, stacksafe, linear space implementation of the Myers diff algorithm and returns the
     * result as a [[Diff]] instance, which serves as the tee-off point for further, downstream logic.
     *
     * The core algorithm is based on the work of Robert Elder.
@@ -446,8 +398,7 @@ object Diff {
   def apply[T: Eq](base: IndexedSeq[T], target: IndexedSeq[T]): Diff[T] =
     new Myers().diff(base, target)
 
-  /**
-    * Returns a longest common subsequence of the `base` and `target` sequences.
+  /** Returns a longest common subsequence of the `base` and `target` sequences.
     * or [[None]], if the two sequences have no elements in common.
     * Stacksafe and reasonably efficient.
     */
@@ -491,8 +442,7 @@ object Diff {
       buf.result()
     } else ArraySeq.empty
 
-  /**
-    * Returns the minimum number of edits required to transform `base` and `target`,
+  /** Returns the minimum number of edits required to transform `base` and `target`,
     * whereby one "edit" corresponds to deleting or inserting one single element.
     *
     * Equal to `Diff(base, target).delInsOps.map(_.count).sum` but more efficient.
@@ -526,8 +476,7 @@ object Diff {
 
   //////////////////////////////////////////// IMPLEMENTATION //////////////////////////////////////////////
 
-  /**
-    * Optimized transcription of the "find_middle_snake_myers_original" implementation in
+  /** Optimized transcription of the "find_middle_snake_myers_original" implementation in
     * https://github.com/RobertElderSoftware/roberteldersoftwarediff/blob/master/myers_diff_and_variations.py
     * which is licensed under the Apache License Version 2.0.
     */

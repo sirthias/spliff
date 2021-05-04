@@ -22,56 +22,52 @@ inThisBuild(
 lazy val commonSettings = Seq(
   scalaVersion := "2.13.5",
   crossScalaVersions := Seq("2.13.5", "3.0.0-RC3"),
-
   libraryDependencies ++= Seq(
     "org.scalameta"  %% "munit"            % "0.7.25" % Test,
     "org.scalameta"  %% "munit-scalacheck" % "0.7.25" % Test,
     "org.scalacheck" %% "scalacheck"       % "1.15.3" % Test
   ),
-
   Compile / doc / scalacOptions += "-no-link-warnings",
   scalacOptions ++= Seq(
     "-deprecation",
-    "-encoding", "UTF-8",
+    "-encoding",
+    "UTF-8",
     "-feature",
     "-language:_",
     "-unchecked",
     "-Xfatal-warnings"
   ),
-
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, _)) => Seq(
-        "-target:jvm-1.8",
-        "-Xlint:_,-missing-interpolator",
-        "-Ywarn-dead-code",
-        "-Ywarn-numeric-widen",
-        "-Ybackend-parallelism", "8",
-        "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
-        "-Ycache-macro-class-loader:last-modified",
-      )
-      case Some((3, _)) => Seq(
-        "-source:3.0-migration",
-        "-language:implicitConversions"
-      )
+      case Some((2, _)) =>
+        Seq(
+          "-target:jvm-1.8",
+          "-Xlint:_,-missing-interpolator",
+          "-Ywarn-dead-code",
+          "-Ywarn-numeric-widen",
+          "-Ybackend-parallelism",
+          "8",
+          "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
+          "-Ycache-macro-class-loader:last-modified",
+        )
+      case Some((3, _)) =>
+        Seq(
+          "-source:3.0-migration",
+          "-language:implicitConversions"
+        )
       case x => sys.error(s"unsupported scala version: $x")
     }
   },
-
-  Compile / console / scalacOptions ~= (_ filterNot(o => o.contains("warn") || o.contains("Xlint"))),
+  Compile / console / scalacOptions ~= (_ filterNot (o => o.contains("warn") || o.contains("Xlint"))),
   Test / console / scalacOptions := (Compile / console / scalacOptions).value,
   Compile / doc / scalacOptions += "-no-link-warnings",
   Compile / unmanagedResources += baseDirectory.value.getParentFile.getParentFile / "LICENSE",
   sourcesInBase := false,
-
   // file headers
   headerLicense := Some(HeaderLicense.MPLv2("2021", "Mathias Doenitz")),
-
   // reformat main and test sources on compile
   scalafmtOnCompile := true,
-
   testFrameworks += new TestFramework("munit.Framework"),
-
   // publishing
   publishMavenStyle := true,
   Test / publishArtifact := false,
@@ -106,7 +102,8 @@ lazy val releaseSettings = {
   )
 }
 
-lazy val root = project.in(file("."))
+lazy val root = project
+  .in(file("."))
   .aggregate(`spliff-jvm`, `spliff-js`)
   .settings(commonSettings)
   .settings(releaseSettings)
@@ -116,7 +113,9 @@ lazy val root = project.in(file("."))
 
 lazy val `spliff-jvm` = spliff.jvm
 lazy val `spliff-js`  = spliff.js
-lazy val spliff = crossProject(JSPlatform, JVMPlatform).withoutSuffixFor(JVMPlatform)
+
+lazy val spliff = crossProject(JSPlatform, JVMPlatform)
+  .withoutSuffixFor(JVMPlatform)
   .crossType(CrossType.Pure)
   .enablePlugins(AutomateHeaderPlugin)
   .settings(commonSettings)
