@@ -57,15 +57,25 @@ Example:
 import io.bullet.spliff.Diff
 
 // create a 'diff' between two `IndexedSeq[T]`
-val diff = Diff("the base sequence", "the target sequence")
+val diff = Diff(
+  "the base sequence",
+  "the target sequence"
+)
 
 // all delete operations required to get from `base` to `target`
 val deletes: Seq[Diff.Op.Delete] = diff.deletes
-deletes ==> ArraySeq(Delete(4, 1), Delete(6, 1))
+deletes ==> ArraySeq(
+  Delete(4, 1),
+  Delete(6, 1)
+)
 
 // all insert operations required to get from `base` to `target`
 val inserts: Seq[Diff.Op.Insert] = diff.inserts
-inserts ==> ArraySeq(Insert(5, 4, 1), Insert(7, 6, 2), Insert(8, 9, 1))
+inserts ==> ArraySeq(
+  Insert(5, 4, 1),
+  Insert(7, 6, 2),
+  Insert(8, 9, 1)
+)
 
 // all deletes and inserts combined
 val delIns: Seq[Diff.Op.DelIns] = diff.delInsOps
@@ -87,13 +97,19 @@ Example:
 import io.bullet.spliff.Diff
 
 // create a 'diff' between two `IndexedSeq[T]`
-val diff = Diff("the base sequence", "the sequence base !")
+val diff = Diff(
+  "the base sequence",
+  "the sequence base !"
+)
 
 // the diff result as a list of 'delete', 'insert' and 'move' operations
 val delInsMov: Seq[Diff.Op.DelInsMov] = diff.delInsMovOps
 val delInsMovSorted: Seq[Diff.Op.DelInsMov] = diff.delInsMovOpsSorted // same but sorted by index
 
-delInsMov ==> ArraySeq(Move(2, 16, 5), Insert(17, 17, 2))
+delInsMov ==> ArraySeq(
+  Move(2, 16, 5),
+  Insert(17, 17, 2)
+)
 
 // the diff result as a list of 'delete', 'insert', 'move' and 'replace' operations
 val allOps: Seq[Diff.Op] = diff.allOps // already sorted by index
@@ -112,7 +128,10 @@ Example:
 import io.bullet.spliff.Diff
 
 // create a 'diff' between two `IndexedSeq[T]`
-val diff = Diff("the base sequence", "the target sequence")
+val diff = Diff(
+  "the base sequence",
+  "the sequence base !"
+)
 
 // create a batch
 val patch = diff.patch
@@ -151,7 +170,10 @@ Example:
 import io.bullet.spliff.Diff
 
 // create a 'diff' between two `IndexedSeq[T]`
-val diff = Diff("the base sequence", "the target sequence")
+val diff = Diff(
+  "the base sequence",
+  "the sequence base !"
+)
 
 // the diff represented as a sequence of "chunks"
 val chunks: Seq[Diff.Chunk[T]] = diff.chunks
@@ -175,7 +197,10 @@ Example:
 import io.bullet.spliff.Diff
 
 // create a 'diff' between two `IndexedSeq[T]`
-val diff = Diff("the base sequence", "the target sequence")
+val diff = Diff(
+  "the base sequence",
+  "the sequence base !"
+)
 
 // a bidirectional mapping between each individual base and target index, where possible
 val bimap: Diff.Bimap = diff.bimap
