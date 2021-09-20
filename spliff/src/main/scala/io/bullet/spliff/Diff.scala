@@ -158,17 +158,16 @@ object Diff {
     /**
      * The super type of the two basic diff operations returned by Myers' Diff algorithm, [[Delete]] and [[Insert]].
      */
-    sealed trait DelIns
-        extends DelInsMov
+    sealed trait DelIns extends DelInsMov
 
-        /**
-         * Represents a number of contiguous elements that is present in the base sequence but not in the target.
-         *
-         * @param baseIx
-         *   the index of the first element in the base sequence that is deleted
-         * @param count
-         *   the number of elements in the deleted chunk
-         */
+    /**
+     * Represents a number of contiguous elements that is present in the base sequence but not in the target.
+     *
+     * @param baseIx
+     *   the index of the first element in the base sequence that is deleted
+     * @param count
+     *   the number of elements in the deleted chunk
+     */
     final case class Delete(baseIx: Int, count: Int) extends DelIns with Patch.Step[Nothing] {
       if (count <= 0) throw new IllegalArgumentException
     }
