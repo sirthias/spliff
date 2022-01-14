@@ -20,8 +20,8 @@ inThisBuild(
 )
 
 lazy val commonSettings = Seq(
-  scalaVersion       := "2.13.6",
-  crossScalaVersions := Seq("2.13.6", "3.0.2"),
+  scalaVersion       := "2.13.8",
+  crossScalaVersions := Seq("2.13.8", "3.0.2"),
   libraryDependencies ++= Seq(
     "org.scalameta"  %% "munit"            % "0.7.29" % Test,
     "org.scalameta"  %% "munit-scalacheck" % "0.7.29" % Test,
