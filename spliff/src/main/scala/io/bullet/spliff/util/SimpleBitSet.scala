@@ -22,8 +22,8 @@ private[spliff] object SimpleBitSet {
   private class Small extends SimpleBitSet {
     private[this] var long: Long = _
 
-    def contains(i: Int) = ((long >> i) & 0x1) != 0
-    def +=(i: Int): Unit = long |= (0x1 << i)
+    def contains(i: Int) = (long >> i & 0x1) != 0
+    def +=(i: Int): Unit = long |= 0x1 << i
   }
 
   private class Large(size: Int) extends SimpleBitSet {
