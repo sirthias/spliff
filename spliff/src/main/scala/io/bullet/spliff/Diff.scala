@@ -457,7 +457,7 @@ object Diff {
    *   https://blog.jcoglan.com/2017/02/12/the-myers-diff-algorithm-part-1/
    */
   def apply[T: Eq](base: IndexedSeq[T], target: IndexedSeq[T]): Diff[T] =
-    new Myers().diff(base, target)
+    (new Myers).diff(base, target)
 
   /**
    * Returns a longest common subsequence of the `base` and `target` sequences. or [[None]], if the two sequences have
@@ -572,7 +572,7 @@ object Diff {
         Vf(if (k >= 0) k else MAX2 + k) = x
         val kd = -(k - Delta)
         val D1 = D - 1
-        if (deltaOdd && kd >= -D1 && kd <= D1 && (vf(k) + vb(kd)) >= N) {
+        if (deltaOdd && kd >= -D1 && kd <= D1 && vf(k) + vb(kd) >= N) {
           stack.push4(x_i, y_i, x, y)
           return 2 * D - 1
         }
@@ -588,7 +588,7 @@ object Diff {
         while (x < N && y < M && eq(base(i + N - x - 1), target(j + M - y - 1))) { x += 1; y += 1 }
         Vb(if (k >= 0) k else MAX2 + k) = x
         val kd = -(k - Delta)
-        if (!deltaOdd && kd >= -D && kd <= D && (vb(k) + vf(kd)) >= N) {
+        if (!deltaOdd && kd >= -D && kd <= D && vb(k) + vf(kd) >= N) {
           stack.push4(N - x, M - y, N - x_i, M - y_i)
           return 2 * D
         }
@@ -652,7 +652,7 @@ object Diff {
           val g      = new Array[Int](Z)
           val p      = new Array[Int](Z)
           var h      = 0
-          val hLimit = (L / 2 + modL2) + 1
+          val hLimit = L / 2 + modL2 + 1
           while (h < hLimit) {
             var c   = g
             var d   = p
@@ -683,7 +683,7 @@ object Diff {
                   var u  = a
                   var v  = b
                   if (o == 0) { x = N - a; y = M - b; u = N - s; v = M - t }
-                  if (_D > 1 || (x != u && y != v)) {
+                  if (_D > 1 || x != u && y != v) {
                     stack.push4(i + u, N - u, j + v, M - v)
                     stack.push4(i, x, j, y)
                   } else if (M > N) {
@@ -754,7 +754,7 @@ object Diff {
             val ins = inserts(insIx)
 
             @tailrec def doMatch(i: Int): Boolean =
-              (i == del.count) || eq(base(del.baseIx + i), target(ins.targetIx + i)) && doMatch(i + 1)
+              i == del.count || eq(base(del.baseIx + i), target(ins.targetIx + i)) && doMatch(i + 1)
 
             if (del.count == ins.count && !pairedInserts.contains(insIx) && doMatch(0)) {
               // this del and ins match completely, so merge them into an `Op.Move`
