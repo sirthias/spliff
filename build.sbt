@@ -4,10 +4,10 @@ import sbt._
 inThisBuild(
   Seq(
     organization := "io.bullet",
-    homepage := Some(new URL("https://github.com/sirthias/spliff/")),
-    description := "Efficient diffing in Scala",
-    startYear := Some(2020),
-    licenses := Seq("MPLv2" → new URL("https://www.mozilla.org/en-US/MPL/2.0/")),
+    homepage     := Some(new URL("https://github.com/sirthias/spliff/")),
+    description  := "Efficient diffing in Scala",
+    startYear    := Some(2020),
+    licenses     := Seq("MPLv2" → new URL("https://www.mozilla.org/en-US/MPL/2.0/")),
     scmInfo := Some(ScmInfo(url("https://github.com/sirthias/spliff/"), "scm:git:git@github.com:sirthias/spliff.git")),
     developers :=
       List(
@@ -20,7 +20,7 @@ inThisBuild(
 )
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.13.8",
+  scalaVersion       := "2.13.8",
   crossScalaVersions := Seq("2.13.8", "3.1.2"),
   libraryDependencies ++= Seq(
     "org.scalameta"  %% "munit"            % "0.7.29" % Test,
@@ -69,14 +69,13 @@ lazy val commonSettings = Seq(
 
   // reformat main and test sources on compile
   scalafmtOnCompile := true,
-
   testFrameworks += new TestFramework("munit.Framework"),
 
   // publishing
-  publishMavenStyle := true,
+  publishMavenStyle      := true,
   Test / publishArtifact := false,
-  pomIncludeRepository := (_ ⇒ false),
-  publishTo := sonatypePublishToBundle.value,
+  pomIncludeRepository   := (_ ⇒ false),
+  publishTo              := sonatypePublishToBundle.value,
 )
 
 lazy val scalajsSettings = Seq(
