@@ -1,13 +1,14 @@
 import sbtcrossproject.CrossPlugin.autoImport.{crossProject, CrossType}
 import sbt._
+import java.net.URI
 
 inThisBuild(
   Seq(
     organization := "io.bullet",
-    homepage := Some(new URL("https://github.com/sirthias/spliff/")),
+    homepage := Some(URI.create("https://github.com/sirthias/spliff/").toURL),
     description := "Efficient diffing in Scala",
     startYear := Some(2020),
-    licenses := Seq("MPLv2" → new URL("https://www.mozilla.org/en-US/MPL/2.0/")),
+    licenses := Seq("MPLv2" -> URI.create("https://www.mozilla.org/en-US/MPL/2.0/").toURL),
     scmInfo := Some(ScmInfo(url("https://github.com/sirthias/spliff/"), "scm:git:git@github.com:sirthias/spliff.git")),
     developers :=
       List(
@@ -20,12 +21,12 @@ inThisBuild(
 )
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.13.8",
-  crossScalaVersions := Seq("2.13.8", "3.1.2"),
+  scalaVersion := "2.13.12",
+  crossScalaVersions := Seq("2.13.12", "3.3.1"),
   libraryDependencies ++= Seq(
-    "org.scalameta"  %% "munit"            % "0.7.29" % Test,
-    "org.scalameta"  %% "munit-scalacheck" % "0.7.29" % Test,
-    "org.scalacheck" %% "scalacheck"       % "1.16.0" % Test
+    "org.scalameta"  %% "munit"            % "1.0.0-M10" % Test,
+    "org.scalameta"  %% "munit-scalacheck" % "1.0.0-M10" % Test,
+    "org.scalacheck" %% "scalacheck"       % "1.17.0" % Test
   ),
   Compile / doc / scalacOptions += "-no-link-warnings",
   scalacOptions ++= Seq(
@@ -33,27 +34,29 @@ lazy val commonSettings = Seq(
     "-encoding",
     "UTF-8",
     "-feature",
-    "-language:_",
+    "-language:implicitConversions",
+    "-release:8",
     "-unchecked",
-    "-Xfatal-warnings"
+    "-Werror",
+    "-Wnonunit-statement",
+    "-Wvalue-discard",
   ),
   scalacOptions ++= {
     CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, _)) =>
         Seq(
-          "-target:jvm-1.8",
-          "-Xlint:_,-missing-interpolator",
-          "-Ywarn-dead-code",
-          "-Ywarn-numeric-widen",
+          "-Wdead-code",
+          "-Wnumeric-widen",
+          "-Wunused",
+          "-Xlint",
+          "-Xsource:3",
           "-Ybackend-parallelism",
           "8",
-          "-Ywarn-unused:imports,-patvars,-privates,-locals,-implicits,-explicits",
           "-Ycache-macro-class-loader:last-modified",
         )
       case Some((3, _)) =>
         Seq(
-          "-source:3.0-migration",
-          "-language:implicitConversions"
+          "-Wunused:all",
         )
       case x => sys.error(s"unsupported scala version: $x")
     }
@@ -69,8 +72,6 @@ lazy val commonSettings = Seq(
 
   // reformat main and test sources on compile
   scalafmtOnCompile := true,
-
-  testFrameworks += new TestFramework("munit.Framework"),
 
   // publishing
   publishMavenStyle := true,
