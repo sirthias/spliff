@@ -68,9 +68,6 @@ lazy val commonSettings = Seq(
   // file headers
   headerLicense := Some(HeaderLicense.MPLv2("2021 - 2024", "Mathias Doenitz")),
 
-  // reformat main and test sources on compile
-  scalafmtOnCompile := true,
-
   // publishing
   publishMavenStyle := true,
   Test / publishArtifact := false,
