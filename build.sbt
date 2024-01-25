@@ -102,7 +102,7 @@ lazy val releaseSettings = {
   )
 }
 
-lazy val root = project
+lazy val `spliff-root` = project
   .in(file("."))
   .aggregate(`spliff-jvm`, `spliff-js`)
   .settings(commonSettings)
