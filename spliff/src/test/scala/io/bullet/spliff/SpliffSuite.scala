@@ -10,13 +10,13 @@ package io.bullet.spliff
 
 import munit.FunSuite
 
-import scala.annotation.implicitNotFound
+import scala.annotation.{implicitNotFound, unused}
 
 abstract class SpliffSuite extends FunSuite {
 
   implicit class ArrowAssert[A](lhs: A) {
 
-    def ==>[B](rhs: B)(implicit ev: SpliffSuite.CanEqual[A, B], loc: munit.Location): Unit = {
+    def ==>[B](rhs: B)(implicit @unused ev: SpliffSuite.CanEqual[A, B], loc: munit.Location): Unit = {
       def arrayToSeq(x: Any) =
         x match {
           case a: Array[_] => a.toSeq

@@ -11,7 +11,7 @@ package io.bullet.spliff
 import io.bullet.spliff.util.{IntArrayStack, SimpleBitSet}
 
 import java.{util => jutil}
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 import scala.collection.immutable.ArraySeq
 import scala.collection.IndexedSeqView
 import scala.reflect.ClassTag
@@ -844,7 +844,7 @@ object Diff {
               jutil.Arrays.fill(ttbMap, targetIx, targetIx + count, -1)
               rec(delInsIx + 1, math.max(baseCursor, baseIx), targetIx + count)
           }
-        } else { mapUp(baseCursor, targetCursor, bttMap.length); () }
+        } else mapUp(baseCursor, targetCursor, bttMap.length): @nowarn
 
       rec(0, 0, 0)
 
