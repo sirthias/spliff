@@ -31,8 +31,7 @@ lazy val commonSettings = Seq(
   Compile / doc / scalacOptions += "-no-link-warnings",
   scalacOptions ++= Seq(
     "-deprecation",
-    "-encoding",
-    "UTF-8",
+    "-encoding", "UTF-8",
     "-feature",
     "-language:implicitConversions",
     "-release:8",
@@ -50,8 +49,7 @@ lazy val commonSettings = Seq(
           "-Wunused",
           "-Xlint",
           "-Xsource:3",
-          "-Ybackend-parallelism",
-          "8",
+          "-Ybackend-parallelism", "8",
           "-Ycache-macro-class-loader:last-modified",
         )
       case Some((3, _)) =>
@@ -68,7 +66,7 @@ lazy val commonSettings = Seq(
   sourcesInBase := false,
 
   // file headers
-  headerLicense := Some(HeaderLicense.MPLv2("2021", "Mathias Doenitz")),
+  headerLicense := Some(HeaderLicense.MPLv2("2021 - 2024", "Mathias Doenitz")),
 
   // reformat main and test sources on compile
   scalafmtOnCompile := true,
