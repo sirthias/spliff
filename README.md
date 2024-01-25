@@ -130,7 +130,7 @@ import io.bullet.spliff.Diff
 // create a 'diff' between two `IndexedSeq[T]`
 val diff = Diff(
   "the base sequence",
-  "the sequence base !"
+  "the target sequence"
 )
 
 // create a batch
@@ -172,7 +172,7 @@ import io.bullet.spliff.Diff
 // create a 'diff' between two `IndexedSeq[T]`
 val diff = Diff(
   "the base sequence",
-  "the sequence base !"
+  "the target sequence"
 )
 
 // the diff represented as a sequence of "chunks"
@@ -199,7 +199,7 @@ import io.bullet.spliff.Diff
 // create a 'diff' between two `IndexedSeq[T]`
 val diff = Diff(
   "the base sequence",
-  "the sequence base !"
+  "the target sequence"
 )
 
 // a bidirectional mapping between each individual base and target index, where possible
