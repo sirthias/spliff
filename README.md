@@ -134,7 +134,7 @@ val diff = Diff(
 )
 
 // create a batch
-val patch = diff.patch
+val patch: Diff.Patch[Char] = diff.patch
 
 patch ==> Patch(
   baseSize = 17,
@@ -176,7 +176,7 @@ val diff = Diff(
 )
 
 // the diff represented as a sequence of "chunks"
-val chunks: Seq[Diff.Chunk[T]] = diff.chunks
+val chunks: Seq[Diff.Chunk[Char]] = diff.chunks
 
 chunks ==> Seq(
   Diff.Chunk.InBoth("the "),
