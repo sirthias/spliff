@@ -21,12 +21,12 @@ inThisBuild(
 )
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.13.12",
-  crossScalaVersions := Seq("2.13.13", "3.3.3"),
+  scalaVersion := "2.13.14",
+  crossScalaVersions := Seq("2.13.14", "3.3.4"),
   libraryDependencies ++= Seq(
-    "org.scalameta"  %% "munit"            % "1.0.0-RC1" % Test,
-    "org.scalameta"  %% "munit-scalacheck" % "1.0.0-M12" % Test,
-    "org.scalacheck" %% "scalacheck"       % "1.17.1" % Test
+    "org.scalameta"  %% "munit"            % "1.0.0" % Test,
+    "org.scalameta"  %% "munit-scalacheck" % "1.0.0" % Test,
+    "org.scalacheck" %% "scalacheck"       % "1.18.0" % Test
   ),
   Compile / doc / scalacOptions += "-no-link-warnings",
   scalacOptions ++= Seq(
