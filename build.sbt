@@ -5,10 +5,10 @@ import java.net.URI
 inThisBuild(
   Seq(
     organization := "io.bullet",
-    homepage := Some(URI.create("https://github.com/sirthias/spliff/").toURL),
-    description := "Efficient diffing in Scala",
-    startYear := Some(2020),
-    licenses := Seq("MPLv2" -> URI.create("https://www.mozilla.org/en-US/MPL/2.0/").toURL),
+    homepage     := Some(URI.create("https://github.com/sirthias/spliff/").toURL),
+    description  := "Efficient diffing in Scala",
+    startYear    := Some(2020),
+    licenses     := Seq("MPLv2" -> URI.create("https://www.mozilla.org/en-US/MPL/2.0/").toURL),
     scmInfo := Some(ScmInfo(url("https://github.com/sirthias/spliff/"), "scm:git:git@github.com:sirthias/spliff.git")),
     developers :=
       List(
@@ -21,17 +21,18 @@ inThisBuild(
 )
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.13.14",
+  scalaVersion       := "2.13.14",
   crossScalaVersions := Seq("2.13.14", "3.3.4"),
   libraryDependencies ++= Seq(
-    "org.scalameta"  %% "munit"            % "1.0.0" % Test,
-    "org.scalameta"  %% "munit-scalacheck" % "1.0.0" % Test,
+    "org.scalameta"  %% "munit"            % "1.0.2"  % Test,
+    "org.scalameta"  %% "munit-scalacheck" % "1.0.0"  % Test,
     "org.scalacheck" %% "scalacheck"       % "1.18.0" % Test
   ),
   Compile / doc / scalacOptions += "-no-link-warnings",
   scalacOptions ++= Seq(
     "-deprecation",
-    "-encoding", "UTF-8",
+    "-encoding",
+    "UTF-8",
     "-feature",
     "-language:implicitConversions",
     "-release:8",
@@ -49,7 +50,8 @@ lazy val commonSettings = Seq(
           "-Wunused",
           "-Xlint",
           "-Xsource:3",
-          "-Ybackend-parallelism", "8",
+          "-Ybackend-parallelism",
+          "8",
           "-Ycache-macro-class-loader:last-modified",
         )
       case Some((3, _)) =>
@@ -69,10 +71,10 @@ lazy val commonSettings = Seq(
   headerLicense := Some(HeaderLicense.MPLv2("2021 - 2024", "Mathias Doenitz")),
 
   // publishing
-  publishMavenStyle := true,
+  publishMavenStyle      := true,
   Test / publishArtifact := false,
-  pomIncludeRepository := (_ ⇒ false),
-  publishTo := sonatypePublishToBundle.value,
+  pomIncludeRepository   := (_ ⇒ false),
+  publishTo              := sonatypePublishToBundle.value,
 )
 
 lazy val scalajsSettings = Seq(
