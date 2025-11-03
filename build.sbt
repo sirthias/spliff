@@ -73,6 +73,7 @@ lazy val commonSettings = Seq(
   Test / publishArtifact := false,
   pomIncludeRepository := (_ ⇒ false),
   publishTo := sonatypePublishToBundle.value,
+  sonatypeCredentialHost := xerial.sbt.Sonatype.sonatypeCentralHost,
 )
 
 lazy val scalajsSettings = Seq(
