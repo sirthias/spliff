@@ -794,8 +794,8 @@ object Diff {
 
       @tailrec def rec(dimIx: Int, resIx: Int, last: Op): Int =
         if (dimIx < dimArray.length) {
-          val op  = dimArray(dimIx)
-          var ir1 = resIx
+          val op   = dimArray(dimIx)
+          var ir1  = resIx
           val next = last -> op match {
             case (Op.Delete(delBaseIx, delCnt), Op.Insert(insBaseIx, targetIx, insCnt)) if delBaseIx == insBaseIx =>
               ir1 = resIx - 1
@@ -894,7 +894,7 @@ object Diff {
           case (InTarget(b), InBase(a))      => Distinct(a, b)
           case (Distinct(a, b), InBase(c))   => Distinct(a merge c, b)
           case (Distinct(a, b), InTarget(c)) => Distinct(a, b merge c)
-          case _ =>
+          case _                             =>
             buf += last
             next
         }
@@ -929,7 +929,7 @@ object Diff {
     def patch(implicit ct: ClassTag[T]): Patch[T] = {
       val steps = delInsMovOps.map {
         case Op.Insert(baseIx, targetIx, count) =>
-          val values = new Array[T](count)
+          val values                         = new Array[T](count)
           @tailrec def rec(i: Int): Array[T] =
             if (i < values.length) rec(setAndGetNextIndex(values, i, target(targetIx + i))) else values
           Patch.Insert(baseIx, ArraySeq.unsafeWrapArray(rec(0)))
